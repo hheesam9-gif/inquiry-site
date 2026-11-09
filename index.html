@@ -721,6 +721,14 @@ html.lenis,html.lenis body{height:auto}
 @keyframes sigFlow{to{background-position:250% 0}}
 .spark{position:absolute;width:6px;height:6px;margin:-3px 0 0 -3px;border-radius:50%;pointer-events:none;
   background:var(--accent2);box-shadow:0 0 10px var(--accent2)}
+/* ===== قفل نمایندگان (اطلاعیه) ===== */
+#maintGate{display:none;position:fixed;inset:0;z-index:150;align-items:center;justify-content:center;padding:16px;
+  background:rgba(1,9,23,.9);backdrop-filter:blur(10px)}
+.maint-box{background:var(--surface);border:1px solid var(--warn-bd);border-radius:24px;padding:30px 26px;
+  width:min(460px,100%);text-align:center;box-shadow:var(--shadow),0 0 40px rgba(245,158,11,.15)}
+.maint-box .mt{font-size:19px;font-weight:800;color:var(--warn-fg);margin-bottom:12px}
+.maint-box .mb{white-space:pre-line;line-height:2;font-weight:600;color:var(--ink)}
+button.warn-btn{background:linear-gradient(115deg,#d97706,#f59e0b)!important;box-shadow:0 8px 24px rgba(245,158,11,.3)!important}
 </style>
 </head>
 <body>
@@ -730,6 +738,10 @@ html.lenis,html.lenis body{height:auto}
 <input id="lgPass" type="password" autocomplete="current-password" placeholder="رمز عبور">
 <div id="authErr"></div>
 <button id="loginBtn" type="button">ورود</button>
+</div></div>
+<div id="maintGate"><div class="maint-box">
+  <div class="mt">📢 اطلاعیه مهم</div>
+  <div class="mb" id="maintText"></div>
 </div></div>
 <div class="wrap">
   <header class="hero">
@@ -832,6 +844,10 @@ html.lenis,html.lenis body{height:auto}
     <label class="sw"><input type="checkbox" id="admFan"> استعلام از فناوران فعال باشد</label>
     <label for="admSrc">نرم‌افزار فناوران</label>
     <select id="admSrc"><option value="arman">آرمان</option><option value="ma">بیمه ما</option></select>
+    <hr style="border:0;border-top:1px solid var(--line);margin:14px 0">
+<strong style="font-size:14px">قفل پنل نماینده‌ها</strong>
+<textarea id="admMaintMsg" rows="4" style="width:100%;margin-top:8px;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:var(--field);color:var(--ink);font:inherit"></textarea>
+<button id="admMaint" type="button" style="margin-top:8px;width:100%">🔒 قفل کردن پنل نماینده‌ها</button>
     <p id="admMsg" style="margin-top:12px"></p>
     <hr style="border:0;border-top:1px solid var(--line);margin:14px 0">
     <strong style="font-size:14px">ثبت نماینده جدید</strong>
@@ -1757,15 +1773,25 @@ $("sigCard").addEventListener("click", e => {
        duration: .6 + Math.random() * .4, ease: "power2.out", onComplete: () => s.remove()});
   }
 });
-
+const DEFAULT_MAINT = "به اطلاع می‌رساند، سامانه تا فردا ساعت ۱۰ الی ۱۲ غیرفعال خواهد بود.\n🙏 از صبوری و همراهی شما سپاسگزاریم.";
+let maintOn = false;
+function showMaint(on, msg){
+  $("maintGate").style.display = on ? "flex" : "none";
+  if(on) $("maintText").textContent = msg || DEFAULT_MAINT;
+  lockScroll(on);
+}
 /* ---------- ادمین و تنظیمات فناوران ---------- */
+let isAdmin = false;
 function applyAdmin(s){
   const role = s && s.user && s.user.app_metadata && s.user.app_metadata.role;
-  $("adminBtn").style.display = role === "admin" ? "" : "none";
+  isAdmin = role === "admin";
+  $("adminBtn").style.display = isAdmin ? "" : "none";
+  if(!s) showMaint(false);
 }
 async function refreshSettings(){
-  const {data} = await sb.from("settings").select("fanavaran_enabled,pardis_enabled").eq("id", 1).single();
+  const {data} = await sb.from("settings").select("fanavaran_enabled,pardis_enabled,maintenance_enabled,maintenance_message").eq("id", 1).single();
   if(!data) return;
+  showMaint(data.maintenance_enabled === true && !isAdmin, data.maintenance_message);
   const fan = data.fanavaran_enabled !== false, par = data.pardis_enabled !== false;
   const need = {"شماره بیمه نامه": fan, "پلاک": par, "شماره موتور": fan || par, "شماره شاسی": fan || par, "شماره VIN": fan || par};
   let bad = false;
@@ -1787,13 +1813,35 @@ $("adminBtn").onclick = async () => {
   toggleFab(false);
   $("admMsg").textContent = "";
   $("adminModal").style.display = "flex";
-  const {data, error} = await sb.from("settings").select("fanavaran_enabled,fanavaran_source,pardis_enabled").eq("id", 1).single();
+  const {data, error} = await sb.from("settings").select("fanavaran_enabled,fanavaran_source,pardis_enabled,maintenance_enabled,maintenance_message").eq("id", 1).single();
   if(error || !data){ $("admMsg").textContent = "خواندن تنظیمات ناموفق بود"; return; }
   $("admFan").checked = data.fanavaran_enabled;
   $("admPar").checked = data.pardis_enabled !== false;
   $("admSrc").value = data.fanavaran_source;
+    maintOn = data.maintenance_enabled === true;
+  $("admMaintMsg").value = data.maintenance_message || DEFAULT_MAINT;
+  paintMaint();
 };
 $("admClose").onclick = () => { $("adminModal").style.display = "none"; };
+function paintMaint(){
+  const b = $("admMaint");
+  b.textContent = maintOn ? "🔓 باز کردن پنل نماینده‌ها" : "🔒 قفل کردن پنل نماینده‌ها";
+  b.classList.toggle("warn-btn", !maintOn);
+}
+$("admMaint").onclick = async () => {
+  const next = !maintOn;
+  $("admMaint").disabled = true;
+  const {error} = await sb.from("settings").update({
+    maintenance_enabled: next,
+    maintenance_message: $("admMaintMsg").value.trim() || DEFAULT_MAINT,
+    updated_at: new Date().toISOString()
+  }).eq("id", 1);
+  $("admMaint").disabled = false;
+  if(error){ $("admMsg").textContent = "انجام نشد: " + error.message; return; }
+  maintOn = next;
+  paintMaint();
+  $("admMsg").textContent = next ? "پنل نماینده‌ها قفل شد ✔" : "پنل نماینده‌ها باز شد ✔";
+};
 $("admSave").onclick = async () => {
   const {error} = await sb.from("settings").update({
     fanavaran_enabled: $("admFan").checked, pardis_enabled: $("admPar").checked, fanavaran_source: $("admSrc").value, updated_at: new Date().toISOString()
