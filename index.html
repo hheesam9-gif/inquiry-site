@@ -661,7 +661,7 @@ thead th + th{
 .sw{display:flex;align-items:center;gap:10px;font-size:14px;font-weight:700;color:var(--ink);margin:6px 0 14px;cursor:pointer}
 .sw input{width:20px;height:20px;accent-color:var(--accent)}
 .sw input{width:20px;height:20px;accent-color:var(--accent)}
-#adminModal .cap-box{max-height:92vh;overflow-y:auto}
+#adminModal .cap-box{max-height:92vh;overflow-y:auto;overscroll-behavior:contain}
 html.lenis,html.lenis body{height:auto}
 .lenis.lenis-smooth{scroll-behavior:auto!important}
 .lenis.lenis-stopped{overflow:hidden}
@@ -731,6 +731,7 @@ html.lenis,html.lenis body{height:auto}
 button.warn-btn{background:linear-gradient(115deg,#d97706,#f59e0b)!important;box-shadow:0 8px 24px rgba(245,158,11,.3)!important}
   /* دکمه‌ی شناور همیشه بالاتر از قفل نمایندگان */
 .fab{z-index:160!important}
+.fab .fab-item.locked{background:linear-gradient(115deg,#d97706,#f59e0b);color:#fff;border-color:transparent}
 #maintGate{z-index:150}
 </style>
 </head>
@@ -815,6 +816,7 @@ button.warn-btn{background:linear-gradient(115deg,#d97706,#f59e0b)!important;box
     </button>
     <button class="fab-item" id="logoutBtn" type="button" style="--a:48deg" title="خروج"><svg viewBox="0 0 24 24"><path d="M9 4H5a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1h4M16 8l4 4-4 4M20 12H9"/></svg></button>
     <button class="fab-item" id="adminBtn" type="button" style="--a:90deg;display:none" title="تنظیمات ادمین"><svg viewBox="0 0 24 24"><path d="M4 6h8M16 6h4M4 12h4M12 12h8M4 18h10M18 18h2"/><circle cx="14" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="16" cy="18" r="2"/></svg></button>
+     <button class="fab-item" id="maintBtn" type="button" style="--a:132deg;display:none" title="قفل پنل نماینده‌ها"><svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></button>
   </div>
 
 <div id="capModal">
@@ -841,7 +843,7 @@ button.warn-btn{background:linear-gradient(115deg,#d97706,#f59e0b)!important;box
 </div>
 
 <div id="adminModal">
-  <div class="cap-box">
+  <div class="cap-box" data-lenis-prevent>
     <h3>تنظیمات ادمین</h3>
     <label class="sw"><input type="checkbox" id="admPar"> استعلام از پردیس فعال باشد</label>
     <label class="sw"><input type="checkbox" id="admFan"> استعلام از فناوران فعال باشد</label>
@@ -850,7 +852,7 @@ button.warn-btn{background:linear-gradient(115deg,#d97706,#f59e0b)!important;box
     <hr style="border:0;border-top:1px solid var(--line);margin:14px 0">
 <strong style="font-size:14px">قفل پنل نماینده‌ها</strong>
 <textarea id="admMaintMsg" rows="4" style="width:100%;margin-top:8px;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:var(--field);color:var(--ink);font:inherit"></textarea>
-<button id="admMaint" type="button" style="margin-top:8px;width:100%">🔒 قفل کردن پنل نماینده‌ها</button>
+
     <p id="admMsg" style="margin-top:12px"></p>
     <hr style="border:0;border-top:1px solid var(--line);margin:14px 0">
     <strong style="font-size:14px">ثبت نماینده جدید</strong>
@@ -1789,11 +1791,15 @@ function applyAdmin(s){
   const role = s && s.user && s.user.app_metadata && s.user.app_metadata.role;
   isAdmin = role === "admin";
   $("adminBtn").style.display = isAdmin ? "" : "none";
+  $("maintBtn").style.display = isAdmin ? "" : "none";
   if(!s) showMaint(false);
 }
 async function refreshSettings(){
   const {data} = await sb.from("settings").select("fanavaran_enabled,pardis_enabled,maintenance_enabled,maintenance_message").eq("id", 1).single();
   if(!data) return;
+    maintOn = data.maintenance_enabled === true;
+    paintMaint();
+    if(document.activeElement !== $("admMaintMsg")) $("admMaintMsg").value = data.maintenance_message || DEFAULT_MAINT;
   showMaint(data.maintenance_enabled === true && !isAdmin, data.maintenance_message);
   const fan = data.fanavaran_enabled !== false, par = data.pardis_enabled !== false;
   const need = {"شماره بیمه نامه": fan, "پلاک": par, "شماره موتور": fan || par, "شماره شاسی": fan || par, "شماره VIN": fan || par};
@@ -1826,24 +1832,29 @@ $("adminBtn").onclick = async () => {
   paintMaint();
 };
 $("admClose").onclick = () => { $("adminModal").style.display = "none"; };
+$("adminModal").addEventListener("click", e => {
+  if(e.target === $("adminModal")) $("adminModal").style.display = "none";
+});
 function paintMaint(){
-  const b = $("admMaint");
-  b.textContent = maintOn ? "🔓 باز کردن پنل نماینده‌ها" : "🔒 قفل کردن پنل نماینده‌ها";
-  b.classList.toggle("warn-btn", !maintOn);
+  $("maintBtn").classList.toggle("locked", maintOn);
+  $("maintBtn").title = maintOn ? "باز کردن پنل نماینده‌ها" : "قفل کردن پنل نماینده‌ها";
 }
-$("admMaint").onclick = async () => {
+$("maintBtn").onclick = async () => {
+  toggleFab(false);
   const next = !maintOn;
-  $("admMaint").disabled = true;
   const {error} = await sb.from("settings").update({
     maintenance_enabled: next,
     maintenance_message: $("admMaintMsg").value.trim() || DEFAULT_MAINT,
     updated_at: new Date().toISOString()
   }).eq("id", 1);
-  $("admMaint").disabled = false;
-  if(error){ $("admMsg").textContent = "انجام نشد: " + error.message; return; }
+  if(error){ alert("انجام نشد: " + error.message); return; }
   maintOn = next;
   paintMaint();
-  $("admMsg").textContent = next ? "پنل نماینده‌ها قفل شد ✔" : "پنل نماینده‌ها باز شد ✔";
+  const t = $("toast");
+  t.textContent = next ? "پنل نماینده‌ها قفل شد 🔒" : "پنل نماینده‌ها باز شد 🔓";
+  t.classList.add("on");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove("on"), 1600);
 };
 $("admSave").onclick = async () => {
   const {error} = await sb.from("settings").update({
