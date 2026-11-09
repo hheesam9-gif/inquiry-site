@@ -1026,6 +1026,11 @@ async function run(){
   if(!isPlate && needsClean()) $("val").value = value;
   if(isPlate){ const er = plateError(); if(er){ setStatus("err", er); return; } }
   else if(!value){ setStatus("err", "مقدار را وارد کن"); $("val").focus(); return; }
+  else if(OPTIONS[opt] === "شماره شاسی" && value.length !== 17){
+    setStatus("err", "شماره شاسی باید دقیقاً ۱۷ کاراکتر باشد (الان " + value.length + " کاراکتر است)");
+    $("val").focus();
+    return;
+  }
   setBusy(true);
   setStatus("", "");
   $("result").style.display = "none";
