@@ -1620,7 +1620,10 @@ $("agAdd").onclick = async () => {
   if(error || !data || !data.ok){
   let detail = (data && data.error) || "";
   if(!detail && error){
-    try{ const b = await error.context.json(); detail = b.error || b.message || ""; }catch(e){}
+    try{
+      const raw = await error.context.clone().text();
+      try{ const b = JSON.parse(raw); detail = b.error || b.message || raw; }catch(_){ detail = raw; }
+    }catch(e){}
     detail = detail || error.name + ": " + error.message;
   }
   console.error("create-agent:", error, data);
