@@ -558,9 +558,9 @@ header.hero .theme-btn{position:fixed;left:16px;bottom:16px;top:auto;margin:0;z-
 .fab .fab-item{opacity:0;pointer-events:none;transform:scale(.3);
   transition:transform .3s cubic-bezier(.2,.9,.3,1.2),opacity .2s,background .2s,border-color .2s}
 .fab.open .fab-item{opacity:1;pointer-events:auto;
-  transform:translate(calc(cos(var(--a)) * 92px), calc(sin(var(--a)) * -92px))}
+    transform:translate(calc(cos(var(--a)) * var(--r,92px)), calc(sin(var(--a)) * var(--r,92px) * -1))}
 .fab .fab-item:hover:not(:disabled){filter:none;background:var(--accent-soft);border-color:var(--accent)}
-.fab.open .fab-item:hover:not(:disabled){transform:translate(calc(cos(var(--a)) * 92px), calc(sin(var(--a)) * -92px)) scale(1.08)}
+.fab.open .fab-item:hover:not(:disabled){transform:translate(calc(cos(var(--a)) * var(--r,92px)), calc(sin(var(--a)) * var(--r,92px) * -1)) scale(1.08)}
 .fab .fab-item.active{background:linear-gradient(120deg,var(--accent),var(--accent2));color:#fff;border-color:transparent}
 .fab-item .sun{display:none}
 :root[data-theme="dark"] .fab-item .sun{display:block}
@@ -816,7 +816,7 @@ button.warn-btn{background:linear-gradient(115deg,#d97706,#f59e0b)!important;box
     </button>
     <button class="fab-item" id="logoutBtn" type="button" style="--a:48deg" title="خروج"><svg viewBox="0 0 24 24"><path d="M9 4H5a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1h4M16 8l4 4-4 4M20 12H9"/></svg></button>
     <button class="fab-item" id="adminBtn" type="button" style="--a:90deg;display:none" title="تنظیمات ادمین"><svg viewBox="0 0 24 24"><path d="M4 6h8M16 6h4M4 12h4M12 12h8M4 18h10M18 18h2"/><circle cx="14" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="16" cy="18" r="2"/></svg></button>
-     <button class="fab-item" id="maintBtn" type="button" style="--a:132deg;display:none" title="قفل پنل نماینده‌ها"><svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></button>
+     <button class="fab-item" id="maintBtn" type="button" style="--a:69deg;--r:165px;display:none" title="قفل پنل نماینده‌ها"><svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></button>
   </div>
 
 <div id="capModal">
