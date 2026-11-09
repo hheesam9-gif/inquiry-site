@@ -646,6 +646,8 @@ thead th + th{
 </script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script src="config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/lenis@1.1.13/dist/lenis.min.js"></script>
 <style>
 #authGate{position:fixed;inset:0;z-index:200;align-items:center;justify-content:center;padding:16px;background:rgba(1,9,23,.88);backdrop-filter:blur(8px)}
 .auth-box{background:var(--surface);border:1px solid var(--line);border-radius:22px;padding:26px;width:min(380px,100%);display:flex;flex-direction:column;gap:12px;box-shadow:var(--shadow)}
@@ -659,6 +661,65 @@ thead th + th{
 .sw input{width:20px;height:20px;accent-color:var(--accent)}
 .sw input{width:20px;height:20px;accent-color:var(--accent)}
 #adminModal .cap-box{max-height:92vh;overflow-y:auto}
+html.lenis,html.lenis body{height:auto}
+.lenis.lenis-smooth{scroll-behavior:auto!important}
+.lenis.lenis-stopped{overflow:hidden}
+#welcomeFx{position:fixed;inset:0;z-index:300;display:none;align-items:center;justify-content:center;
+  background:rgba(1,9,23,.92);backdrop-filter:blur(10px);pointer-events:none}
+#welcomeFx .ring{position:absolute;width:190px;height:190px;border-radius:50%;
+  border:2px solid var(--accent2);box-shadow:0 0 40px var(--glow),inset 0 0 40px var(--glow)}
+#welcomeFx .ltr-big{position:relative;font:900 110px Vazirmatn,Tahoma,sans-serif;line-height:1;
+  background:linear-gradient(135deg,#087bff,#00c8ff);-webkit-background-clip:text;background-clip:text;color:transparent;
+  filter:drop-shadow(0 0 22px rgba(0,160,255,.6))}
+#welcomeFx .credit{
+  position:absolute;left:0;right:0;top:calc(50% + 125px);text-align:center;direction:ltr;
+  font:700 clamp(15px,3.6vw,24px) Vazirmatn,Tahoma,sans-serif;letter-spacing:1px;
+  color:#cfe9ff;text-shadow:0 0 18px rgba(0,160,255,.7);opacity:0;
+}
+#welcomeFx .shard{
+  position:absolute;left:50%;top:50%;width:9px;height:9px;margin:-4.5px 0 0 -4.5px;border-radius:50%;
+  background:linear-gradient(135deg,#087bff,#00c8ff);box-shadow:0 0 12px rgba(0,200,255,.9);
+}
+#welcomeFx .wave{
+  position:absolute;width:190px;height:190px;border-radius:50%;
+  border:3px solid #7fd8ff;box-shadow:0 0 30px rgba(0,170,255,.8),inset 0 0 30px rgba(0,170,255,.5);opacity:0;
+}
+#welcomeFx .flash{
+  position:absolute;inset:0;opacity:0;
+  background:radial-gradient(circle at center,#fff 0%,#9fdcff 30%,transparent 68%);
+}
+
+/* ===== امضای پایین سایت ===== */
+.signature{position:relative;margin:48px auto 0;display:flex;flex-direction:column;align-items:center;gap:14px;direction:ltr}
+.sig-line{width:min(560px,80%);height:2px;border-radius:2px;
+  background:linear-gradient(90deg,transparent,var(--accent),var(--accent2),var(--accent),transparent);
+  box-shadow:0 0 16px var(--glow);animation:sigLine 1.2s cubic-bezier(.2,.8,.2,1) both}
+@keyframes sigLine{from{transform:scaleX(0);opacity:0}}
+.sig-card{position:relative;overflow:hidden;display:flex;align-items:center;gap:14px;
+  padding:12px 28px 12px 20px;border-radius:999px;cursor:pointer;user-select:none;
+  background:var(--surface);border:1px solid color-mix(in srgb,var(--accent) 35%,var(--line));
+  box-shadow:var(--shadow);transition:transform .25s,box-shadow .25s}
+.sig-card:hover{transform:translateY(-3px);box-shadow:var(--shadow),0 0 36px var(--glow)}
+.sig-card::after{content:"";position:absolute;top:0;bottom:0;width:70px;left:-100px;transform:skewX(-20deg);
+  background:linear-gradient(90deg,transparent,color-mix(in srgb,var(--accent2) 45%,transparent),transparent);
+  animation:sigShine 4.5s ease-in-out infinite}
+@keyframes sigShine{0%,55%{left:-100px}100%{left:calc(100% + 40px)}}
+.sig-sword{width:50px;height:20px;flex:none;color:var(--accent2);
+  filter:drop-shadow(0 0 6px var(--glow));animation:swordIdle 3.2s ease-in-out infinite}
+@keyframes swordIdle{50%{transform:translateX(5px) rotate(-4deg)}}
+.sig-card:hover .sig-sword{animation:swordSlash .7s cubic-bezier(.2,.9,.3,1) 1}
+@keyframes swordSlash{
+  0%{transform:none}
+  35%{transform:translateX(-12px) rotate(-28deg)}
+  70%{transform:translateX(16px) rotate(8deg) scale(1.2)}
+  100%{transform:none}}
+.sig-txt{font:800 clamp(14px,2.6vw,19px) Vazirmatn,Tahoma,sans-serif;letter-spacing:1.5px;white-space:nowrap;
+  background:linear-gradient(90deg,var(--accent),var(--accent2),var(--accent-ink),var(--accent2),var(--accent));
+  background-size:250% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;
+  animation:sigFlow 5s linear infinite}
+@keyframes sigFlow{to{background-position:250% 0}}
+.spark{position:absolute;width:6px;height:6px;margin:-3px 0 0 -3px;border-radius:50%;pointer-events:none;
+  background:var(--accent2);box-shadow:0 0 10px var(--accent2)}
 </style>
 </head>
 <body>
@@ -687,7 +748,7 @@ thead th + th{
   </div>
 
 
-  <div class="userbar"><span>خوش آمدی <b id="who"></b></span></div>
+  <div class="userbar" style="display:none"><b id="who"></b></div>
   <div class="cmd">
     <div class="form">
       <div>
@@ -725,7 +786,20 @@ thead th + th{
     <div class="found" id="pFound"></div>
     <div id="pCards"></div>
   </div>
+    <footer class="signature" id="sig">
+    <div class="sig-line"></div>
+    
+      <svg class="sig-sword" viewBox="0 0 64 24" fill="currentColor" aria-hidden="true">
+        <path d="M24 9.5h32l7 2.5-7 2.5H24z"/>
+        <rect x="19" y="3.5" width="4.5" height="17" rx="2.2"/>
+        <rect x="7" y="10.4" width="12" height="3.2" rx="1.6"/>
+        <circle cx="4.5" cy="12" r="2.8"/>
+      </svg>
+      <span class="sig-txt">𝗔𝗭𝗞𝗜 𝗦𝗪𝗢𝗥𝗗 - ʜᴇꜱᴀᴍ ᴀʙʙᴀꜱɪ</span>
+    </div>
+  </footer>
 </div>
+
 
 <div id="capModal">
   <div class="cap-box">
@@ -1549,6 +1623,7 @@ function applySession(s){
   applyAdmin(s);
   if(s) refreshSettings();
   if(s){ const u = s.user; $("who").textContent = (u.user_metadata && u.user_metadata.name) || u.email; }
+  if(!s) welcomed = false;
 }
 sb.auth.getSession().then(r => applySession(r.data.session));
 sb.auth.onAuthStateChange((_e, s) => applySession(s));
@@ -1558,10 +1633,108 @@ $("loginBtn").onclick = async () => {
   if(!u.includes("@")) u += "@" + (APP_CONFIG.emailDomain || "agents.local");
   $("authErr").textContent = "";
   const {error} = await sb.auth.signInWithPassword({email: u, password: $("lgPass").value});
-  if(error) $("authErr").textContent = "نام کاربری یا رمز اشتباه است";
+  if(error){ $("authErr").textContent = "نام کاربری یا رمز اشتباه است"; return; }
+  playWelcome(u.charAt(0));
 };
 $("lgPass").addEventListener("keydown", e => { if(e.key === "Enter") $("loginBtn").click(); });
 $("logoutBtn").onclick = () => sb.auth.signOut();
+/* ---------- اسکرول نرم (Lenis) ---------- */
+let lenis = null;
+try{
+  lenis = new Lenis({duration: 1.15, smoothWheel: true});
+  gsap.ticker.add(t => lenis.raf(t * 1000));
+  gsap.ticker.lagSmoothing(0);
+}catch(e){ console.warn("lenis:", e); }
+
+/* وقتی پنجره‌ی مودال باز است، اسکرول صفحه‌ی پشت متوقف شود */
+function lockScroll(on){ if(lenis) on ? lenis.stop() : lenis.start(); }
+
+/* ---------- انیمیشن ورود با حرف اول نام کاربری ---------- */
+let welcomed = false;
+function playWelcome(letter){
+  if(!window.gsap || !letter) return;
+  let fx = $("welcomeFx");
+  if(!fx){
+    fx = document.createElement("div");
+    fx.id = "welcomeFx";
+    document.body.appendChild(fx);
+  }
+  fx.innerHTML =
+    '<div class="ring"></div><div class="wave"></div><div class="wave"></div>' +
+    '<div class="ltr-big"></div><div class="flash"></div>';
+  const q = s => fx.querySelector(s);
+  const ring = q(".ring"), big = q(".ltr-big"), credit = q(".credit"), flash = q(".flash");
+  const waves = fx.querySelectorAll(".wave");
+  big.textContent = letter.toUpperCase();
+  fx.style.display = "flex";
+  lockScroll(true);
+
+  // ذره‌ها: اول دور حلقه‌اند، موقع فشرده شدن به مرکز کشیده می‌شوند، موقع ترکیدن پخش می‌شوند
+  const N = 44, shards = [], ang = [], far = [], dist = [];
+  for(let i = 0; i < N; i++){
+    const s = document.createElement("div");
+    s.className = "shard";
+    fx.appendChild(s);
+    shards.push(s);
+    const a = (i / N) * Math.PI * 2 + Math.random() * .25;
+    ang.push(a);
+    const r = 280 + Math.random() * 200;
+    far.push([Math.cos(a) * r, Math.sin(a) * r]);
+    dist.push(200 + Math.random() * 260);
+  }
+  gsap.set(shards, {x: i => far[i][0], y: i => far[i][1], opacity: 0, scale: () => .5 + Math.random() * 1.4});
+  gsap.set(waves, {opacity: 0, scale: .1});
+  gsap.set(flash, {opacity: 0});
+  
+
+  const tl = gsap.timeline({onComplete: () => { fx.style.display = "none"; lockScroll(false); }});
+  tl.set(fx, {opacity: 1})
+    // ۱) ورود
+    .fromTo(ring, {scale: .2, opacity: 0}, {scale: 1, opacity: 1, duration: .5, ease: "back.out(1.7)"})
+    .fromTo(big, {scale: .2, opacity: 0, rotate: -25, y: 30},
+                 {scale: 1, opacity: 1, rotate: 0, y: 0, duration: .6, ease: "elastic.out(1,.55)"}, "-=.3")
+    
+    // ۲) فشرده شدن ناگهانی
+    .addLabel("squeeze", "+=.25")
+    .to(ring, {scaleX: 1.12, scaleY: .88, duration: .12, ease: "power1.out"}, "squeeze")   // یک لحظه له می‌شود
+    .to(ring, {scale: .12, borderWidth: 12, duration: .5, ease: "power4.in",
+               boxShadow: "0 0 90px rgba(0,210,255,1), inset 0 0 90px rgba(0,210,255,1)"}, "squeeze+=.12")
+    .to(big, {scale: .5, duration: .5, ease: "power4.in"}, "squeeze+=.12")
+    .to(shards, {opacity: 1, duration: .1}, "squeeze")
+    .to(shards, {x: 0, y: 0, duration: .6, ease: "power3.in"}, "squeeze")
+    .to(ring, {x: "+=4", yoyo: true, repeat: 9, duration: .03, ease: "none"}, "squeeze+=.12")
+    // ۳) ترکیدن
+    .addLabel("boom", "squeeze+=.62")
+    .set(ring, {opacity: 0}, "boom")
+    .to(flash, {opacity: .95, duration: .06}, "boom")
+    .to(flash, {opacity: 0, duration: .55, ease: "power2.out"}, "boom+=.06")
+    .to(waves, {scale: 7, opacity: .9, duration: .12, stagger: .1}, "boom")
+    .to(waves, {opacity: 0, duration: .8, stagger: .1, ease: "power2.out"}, "boom+=.12")
+    .to(shards, {x: i => Math.cos(ang[i]) * dist[i], y: i => Math.sin(ang[i]) * dist[i],
+                 opacity: 0, duration: .95, ease: "power3.out"}, "boom")
+    .to(big, {scale: 1.45, duration: .16, ease: "power3.out"}, "boom")
+    .to(big, {scale: 1, duration: .7, ease: "elastic.out(1,.4)"}, "boom+=.16")
+    
+    // ۴) خروج
+    .to(fx, {opacity: 0, duration: .5, delay: .6});
+}
+
+/* جرقه با کلیک روی امضا */
+$("sigCard").addEventListener("click", e => {
+  if(!window.gsap) return;
+  const box = $("sig"), r = box.getBoundingClientRect();
+  for(let i = 0; i < 16; i++){
+    const s = document.createElement("i");
+    s.className = "spark";
+    s.style.left = (e.clientX - r.left) + "px";
+    s.style.top = (e.clientY - r.top) + "px";
+    box.appendChild(s);
+    const a = Math.random() * Math.PI * 2, d = 40 + Math.random() * 70;
+    gsap.fromTo(s, {x: 0, y: 0, opacity: 1, scale: 1},
+      {x: Math.cos(a) * d, y: Math.sin(a) * d, opacity: 0, scale: 0,
+       duration: .6 + Math.random() * .4, ease: "power2.out", onComplete: () => s.remove()});
+  }
+});
 
 /* ---------- ادمین و تنظیمات فناوران ---------- */
 function applyAdmin(s){
