@@ -652,6 +652,7 @@ thead th + th{
 #authGate{position:fixed;inset:0;z-index:200;align-items:center;justify-content:center;padding:16px;background:rgba(1,9,23,.88);backdrop-filter:blur(8px)}
 .auth-box{background:var(--surface);border:1px solid var(--line);border-radius:22px;padding:26px;width:min(380px,100%);display:flex;flex-direction:column;gap:12px;box-shadow:var(--shadow)}
 .auth-box h3{margin:0;font-size:18px;font-weight:800}
+#authGate.checking .auth-box{visibility:hidden}
 #authGate input{width:100%;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:var(--field);color:var(--ink);font:inherit;direction:ltr}
 #authErr{color:var(--bad-fg);font-size:13px;min-height:18px;font-weight:600}
 .userbar{display:flex;align-items:center;gap:10px;margin-bottom:12px;color:var(--muted);font-size:13px;font-weight:600}
@@ -723,7 +724,7 @@ html.lenis,html.lenis body{height:auto}
 </style>
 </head>
 <body>
-<div id="authGate" style="display:flex"><div class="auth-box">
+<div id="authGate" class="checking" style="display:flex"><div class="auth-box">
 <h3>ورود نمایندگان</h3>
 <input id="lgUser" type="text" autocomplete="username" placeholder="نام کاربری">
 <input id="lgPass" type="password" autocomplete="current-password" placeholder="رمز عبور">
@@ -786,18 +787,18 @@ html.lenis,html.lenis body{height:auto}
     <div class="found" id="pFound"></div>
     <div id="pCards"></div>
   </div>
-    <footer class="signature" id="sig">
-    <div class="sig-line"></div>
-    
-      <svg class="sig-sword" viewBox="0 0 64 24" fill="currentColor" aria-hidden="true">
-        <path d="M24 9.5h32l7 2.5-7 2.5H24z"/>
-        <rect x="19" y="3.5" width="4.5" height="17" rx="2.2"/>
-        <rect x="7" y="10.4" width="12" height="3.2" rx="1.6"/>
-        <circle cx="4.5" cy="12" r="2.8"/>
-      </svg>
-      <span class="sig-txt">𝗔𝗭𝗞𝗜 𝗦𝗪𝗢𝗥𝗗 - ʜᴇꜱᴀᴍ ᴀʙʙᴀꜱɪ</span>
-    </div>
-  </footer>
+<footer class="signature" id="sig">
+  <div class="sig-line"></div>
+  <div class="sig-card" id="sigCard">
+    <svg class="sig-sword" viewBox="0 0 64 24" fill="currentColor" aria-hidden="true">
+      <path d="M24 9.5h32l7 2.5-7 2.5H24z"/>
+      <rect x="19" y="3.5" width="4.5" height="17" rx="2.2"/>
+      <rect x="7" y="10.4" width="12" height="3.2" rx="1.6"/>
+      <circle cx="4.5" cy="12" r="2.8"/>
+    </svg>
+    <span class="sig-txt">𝗔𝗭𝗞𝗜 𝗦𝗪𝗢𝗥𝗗 - ʜᴇꜱᴀᴍ ᴀʙʙᴀꜱɪ</span>
+  </div>
+</footer>
 </div>
 
 
@@ -1618,14 +1619,27 @@ $("val").addEventListener("blur", () => { if(needsClean()) $("val").value = clea
 
 /* ---------- ورود با Supabase ---------- */
 const sb = supabase.createClient(APP_CONFIG.url, APP_CONFIG.anonKey);
+let welcomed = false;
 function applySession(s){
   $("authGate").style.display = s ? "none" : "flex";
+  $("authGate").classList.remove("checking");
   applyAdmin(s);
-  if(s) refreshSettings();
-  if(s){ const u = s.user; $("who").textContent = (u.user_metadata && u.user_metadata.name) || u.email; }
-  if(!s) welcomed = false;
+  if(s){
+    refreshSettings();
+    const u = s.user;
+    $("who").textContent = (u.user_metadata && u.user_metadata.name) || u.email;
+    if(!welcomed){                          // فقط یک بار در هر بار باز شدن صفحه
+      welcomed = true;
+      playWelcome((u.email || "?").charAt(0));
+    }
+  }else{
+    welcomed = false;
+  }
 }
-sb.auth.getSession().then(r => applySession(r.data.session));
+sb.auth.getSession()
+  .then(r => applySession(r.data.session))
+  .catch(() => applySession(null));
+setTimeout(() => $("authGate").classList.remove("checking"), 4000);
 sb.auth.onAuthStateChange((_e, s) => applySession(s));
 $("loginBtn").onclick = async () => {
   let u = $("lgUser").value.trim();
@@ -1634,10 +1648,18 @@ $("loginBtn").onclick = async () => {
   $("authErr").textContent = "";
   const {error} = await sb.auth.signInWithPassword({email: u, password: $("lgPass").value});
   if(error){ $("authErr").textContent = "نام کاربری یا رمز اشتباه است"; return; }
-  playWelcome(u.charAt(0));
+  
 };
 $("lgPass").addEventListener("keydown", e => { if(e.key === "Enter") $("loginBtn").click(); });
-$("logoutBtn").onclick = () => sb.auth.signOut();
+$("logoutBtn").onclick = async () => {
+  toggleFab(false);
+  applySession(null);                       // همان لحظه صفحه‌ی ورود می‌آید
+  pLast = null;
+  $("pCards").innerHTML = "";               // نتایج قبلی دیده نشود
+  $("result").style.display = "none";
+  $("lgPass").value = "";
+  try{ await sb.auth.signOut({scope: "local"}); }catch(e){}
+};
 /* ---------- اسکرول نرم (Lenis) ---------- */
 let lenis = null;
 try{
@@ -1650,7 +1672,7 @@ try{
 function lockScroll(on){ if(lenis) on ? lenis.stop() : lenis.start(); }
 
 /* ---------- انیمیشن ورود با حرف اول نام کاربری ---------- */
-let welcomed = false;
+
 function playWelcome(letter){
   if(!window.gsap || !letter) return;
   let fx = $("welcomeFx");
