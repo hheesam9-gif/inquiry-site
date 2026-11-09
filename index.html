@@ -1562,12 +1562,14 @@ function applyAdmin(s){
 async function refreshSettings(){
   const {data} = await sb.from("settings").select("fanavaran_enabled,pardis_enabled").eq("id", 1).single();
   if(!data) return;
-  const fan = data.fanavaran_enabled, par = data.pardis_enabled !== false;
+  const fan = data.fanavaran_enabled !== false, par = data.pardis_enabled !== false;
   const need = {"شماره بیمه نامه": fan, "پلاک": par, "شماره موتور": fan || par, "شماره شاسی": fan || par, "شماره VIN": fan || par};
   let bad = false;
   [...$("opt").options].forEach(o => {
-    const ok = need[o.textContent] !== false;
+    const base = OPTIONS[Number(o.value)];
+    const ok = need[base] !== false;
     o.disabled = !ok;
+    o.textContent = ok ? base : base + " (غیرفعال)";
     if(!ok && o.selected) bad = true;
   });
   if(bad){
@@ -1575,6 +1577,8 @@ async function refreshSettings(){
     if(f){ $("opt").value = f.value; syncPlateMode(); }
   }
 }
+setInterval(refreshSettings, 20000);
+window.addEventListener("focus", refreshSettings);
 $("adminBtn").onclick = async () => {
   toggleFab(false);
   $("admMsg").textContent = "";
