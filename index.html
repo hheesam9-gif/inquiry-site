@@ -657,6 +657,8 @@ thead th + th{
 #adminModal{display:none;position:fixed;inset:0;z-index:100;background:rgba(8,10,20,.55);backdrop-filter:blur(6px);align-items:center;justify-content:center;padding:16px}
 .sw{display:flex;align-items:center;gap:10px;font-size:14px;font-weight:700;color:var(--ink);margin:6px 0 14px;cursor:pointer}
 .sw input{width:20px;height:20px;accent-color:var(--accent)}
+.sw input{width:20px;height:20px;accent-color:var(--accent)}
+#adminModal .cap-box{max-height:92vh;overflow-y:auto}
 </style>
 </head>
 <body>
@@ -756,6 +758,13 @@ thead th + th{
     <label for="admSrc">نرم‌افزار فناوران</label>
     <select id="admSrc"><option value="arman">آرمان</option><option value="ma">بیمه ما</option></select>
     <p id="admMsg" style="margin-top:12px"></p>
+    <hr style="border:0;border-top:1px solid var(--line);margin:14px 0">
+    <strong style="font-size:14px">ثبت نماینده جدید</strong>
+    <input id="agName" type="text" placeholder="نام نماینده (اختیاری)" style="margin-top:8px">
+    <input id="agUser" type="text" class="ltr" placeholder="نام کاربری" autocomplete="off" style="margin-top:8px">
+    <input id="agPass" type="text" class="ltr" placeholder="رمز عبور (حداقل ۶ کاراکتر)" autocomplete="off" style="margin-top:8px">
+    <button class="ghost" id="agAdd" type="button" style="margin-top:8px;width:100%">ثبت نماینده</button>
+    <p id="agMsg" style="margin-top:8px"></p>
     <div class="cap-btns"><button class="ghost" id="admClose" type="button">بستن</button><button id="admSave" type="button">ذخیره</button></div>
   </div>
 </div>
@@ -1596,6 +1605,24 @@ $("admSave").onclick = async () => {
   }).eq("id", 1);
   $("admMsg").textContent = error ? "ذخیره نشد: " + error.message : "ذخیره شد ✔";
   if(!error) refreshSettings();
+};
+$("agAdd").onclick = async () => {
+  const m = $("agMsg");
+  const name = $("agName").value.trim();
+  let u = $("agUser").value.trim();
+  const p = $("agPass").value;
+  if(!u || p.length < 6){ m.textContent = "نام کاربری و رمز (حداقل ۶ کاراکتر) را وارد کن"; return; }
+  if(!u.includes("@")) u += "@" + (APP_CONFIG.emailDomain || "agents.local");
+  $("agAdd").disabled = true;
+  m.textContent = "در حال ثبت…";
+  const {data, error} = await sb.functions.invoke("create-agent", {body: {email: u, password: p, name}});
+  $("agAdd").disabled = false;
+  if(error || !data || !data.ok){
+    m.textContent = "ثبت نشد: " + ((data && data.error) || (error && error.message) || "خطای نامشخص");
+    return;
+  }
+  m.textContent = "نماینده ثبت شد ✔";
+  $("agName").value = ""; $("agUser").value = ""; $("agPass").value = "";
 };
 </script>
 </body>
