@@ -1618,9 +1618,15 @@ $("agAdd").onclick = async () => {
   const {data, error} = await sb.functions.invoke("create-agent", {body: {email: u, password: p, name}});
   $("agAdd").disabled = false;
   if(error || !data || !data.ok){
-    m.textContent = "ثبت نشد: " + ((data && data.error) || (error && error.message) || "خطای نامشخص");
-    return;
+  let detail = (data && data.error) || "";
+  if(!detail && error){
+    try{ const b = await error.context.json(); detail = b.error || b.message || ""; }catch(e){}
+    detail = detail || error.name + ": " + error.message;
   }
+  console.error("create-agent:", error, data);
+  m.textContent = "ثبت نشد: " + (detail || "خطای نامشخص");
+  return;
+}
   m.textContent = "نماینده ثبت شد ✔";
   $("agName").value = ""; $("agUser").value = ""; $("agPass").value = "";
 };
