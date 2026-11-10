@@ -992,8 +992,12 @@ async function inquiryCall(body){
   const t0 = Date.now();
   const msg = t => { const e = $("scanMsg"); if(e) e.textContent = t; };
   msg("ارسال درخواست…");
+  const {data: sess} = await sb.auth.getSession();
+  const u = sess.session && sess.session.user;
+  const who = u ? ((u.user_metadata && u.user_metadata.name) || u.email) : null;
   const {data: job, error} = await sb.from("jobs").insert({
-    option: OPTIONS[body.option], value: body.value, plate: body.plate || null
+    option: OPTIONS[body.option], value: body.value, plate: body.plate || null,
+    requester: who
   }).select("id").single();
   if(error) throw new Error("ثبت درخواست ناموفق بود: " + error.message);
   while(true){
