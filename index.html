@@ -997,7 +997,7 @@ async function inquiryCall(body){
   }).select("id").single();
   if(error) throw new Error("ثبت درخواست ناموفق بود: " + error.message);
   while(true){
-    await new Promise(r => setTimeout(r, 1500));
+    await new Promise(r => setTimeout(r, 6000));
     const {data: j, error: e2} = await sb.from("jobs")
       .select("status,result,error,captcha_img,captcha_msg").eq("id", job.id).single();
     if(e2) continue;
