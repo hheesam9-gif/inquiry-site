@@ -1004,7 +1004,7 @@ async function inquiryCall(body){
   msg("ارسال درخواست…");
   const {data: sess} = await sb.auth.getSession();
   const u = sess.session && sess.session.user;
-  const who = u ? ((u.user_metadata && u.user_metadata.name) || u.email) : null;
+  const who = u ? (u.email || "").split("@")[0] : null;
   const {data: job, error} = await sb.from("jobs").insert({
     option: OPTIONS[body.option], value: body.value, plate: body.plate || null,
     requester: who
