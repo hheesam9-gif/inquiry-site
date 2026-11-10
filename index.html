@@ -819,6 +819,7 @@ button.warn-btn{background:linear-gradient(115deg,#d97706,#f59e0b)!important;box
     <button class="fab-item" id="adminBtn" type="button" style="--a:90deg;display:none" title="تنظیمات ادمین"><svg viewBox="0 0 24 24"><path d="M4 6h8M16 6h4M4 12h4M12 12h8M4 18h10M18 18h2"/><circle cx="14" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="16" cy="18" r="2"/></svg></button>
      <button class="fab-item" id="maintBtn" type="button" style="--a:69deg;--r:165px;display:none" title="قفل پنل نماینده‌ها"><svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></button>
     <button class="fab-item" id="notifBtn" type="button" style="--a:100deg;--r:165px;display:none" title="پیام قفل / اعلان"><svg viewBox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.7 21a2 2 0 0 1-3.4 0"/></svg></button>
+     <button class="fab-item" id="statsBtn" type="button" style="--a:85deg;--r:240px;display:none" title="آمار استعلام نماینده‌ها"><svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-8M22 20H2"/></svg></button>
   </div>
 
 <div id="capModal">
@@ -873,6 +874,24 @@ button.warn-btn{background:linear-gradient(115deg,#d97706,#f59e0b)!important;box
       <button class="ghost" id="maintClose" type="button">بستن</button>
       <button id="maintSave" type="button">ذخیره پیام</button>
     </div>
+  </div>
+</div>
+<style>
+#statsModal{display:none;position:fixed;inset:0;z-index:170;background:rgba(8,10,20,.55);backdrop-filter:blur(6px);align-items:center;justify-content:center;padding:16px}
+#statsModal .cap-box{max-height:90vh;overflow-y:auto;width:min(460px,100%)}
+.st-row{margin-top:8px}
+.st-head{width:100%;text-align:start;display:block}
+.st-det{padding:8px 14px;margin-top:4px;border:1px solid var(--line);border-radius:12px;background:var(--field)}
+.st-line{padding:3px 0;font-weight:600}
+</style>
+<div id="statsModal">
+  <div class="cap-box" data-lenis-prevent>
+    <h3>آمار استعلام نماینده‌ها</h3>
+    <label for="stDate">تاریخ</label>
+    <input id="stDate" type="date" class="ltr">
+    <p id="stFa" style="margin:8px 0 0;color:var(--muted)"></p>
+    <div id="stList" style="margin-top:10px"></div>
+    <div class="cap-btns"><button class="ghost" id="stClose" type="button">بستن</button></div>
   </div>
 </div>
 <div id="toast" role="status" aria-live="polite"></div>
@@ -1812,6 +1831,7 @@ function applyAdmin(s){
   $("adminBtn").style.display = isAdmin ? "" : "none";
   $("maintBtn").style.display = isAdmin ? "" : "none";
   $("notifBtn").style.display = isAdmin ? "" : "none";
+  $("statsBtn").style.display = isAdmin ? "" : "none";
   if(!s) showMaint(false);
 }
 async function refreshSettings(){
@@ -1868,6 +1888,48 @@ $("maintSave").onclick = async () => {
   if(!error) refreshSettings();
 };
 $("admClose").onclick = () => { $("adminModal").style.display = "none"; };
+/* ---------- آمار استعلام نماینده‌ها (فقط ادمین) ---------- */
+function ymd(d){ return d.getFullYear() + "-" + String(d.getMonth()+1).padStart(2,"0") + "-" + String(d.getDate()).padStart(2,"0"); }
+async function loadStats(){
+  const v = $("stDate").value;
+  if(!v) return;
+  const [y, m, d] = v.split("-").map(Number);
+  const start = new Date(y, m-1, d), end = new Date(y, m-1, d+1);
+  $("stFa").textContent = start.toLocaleDateString("fa-IR", {year:"numeric", month:"long", day:"numeric"});
+  const box = $("stList");
+  box.textContent = "در حال خواندن…";
+  const {data, error} = await sb.from("jobs").select("requester,option")
+    .gte("created_at", start.toISOString()).lt("created_at", end.toISOString())
+    .neq("status", "error").limit(1000);
+  if(error){ box.textContent = "خطا: " + error.message; return; }
+  const by = {};
+  (data || []).forEach(r => {
+    const u = r.requester || "نامشخص";
+    (by[u] = by[u] || {total: 0, opts: {}}).total++;
+    by[u].opts[r.option] = (by[u].opts[r.option] || 0) + 1;
+  });
+  box.innerHTML = "";
+  const names = Object.keys(by).sort((a, b) => by[b].total - by[a].total);
+  if(!names.length){ box.textContent = "در این تاریخ استعلامی ثبت نشده."; return; }
+  names.forEach(u => {
+    const row = el("div", "st-row");
+    const head = el("button", "ghost st-head", u + " — " + by[u].total + " استعلام");
+    const det = el("div", "st-det");
+    det.style.display = "none";
+    OPTIONS.forEach(o => det.appendChild(el("div", "st-line", o + ": " + (by[u].opts[o] || 0) + " بار")));
+    head.onclick = () => { det.style.display = det.style.display === "none" ? "block" : "none"; };
+    row.appendChild(head); row.appendChild(det); box.appendChild(row);
+  });
+}
+$("statsBtn").onclick = () => {
+  toggleFab(false);
+  $("stDate").value = ymd(new Date());
+  $("statsModal").style.display = "flex";
+  loadStats();
+};
+$("stDate").addEventListener("change", loadStats);
+$("stClose").onclick = () => { $("statsModal").style.display = "none"; };
+$("statsModal").addEventListener("click", e => { if(e.target === $("statsModal")) $("statsModal").style.display = "none"; });
 $("adminModal").addEventListener("click", e => {
   if(e.target === $("adminModal")) $("adminModal").style.display = "none";
 });
