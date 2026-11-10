@@ -648,7 +648,7 @@ thead th + th{
 <script src="config.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/lenis@1.1.13/dist/lenis.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
 <style>
 #authGate{position:fixed;inset:0;z-index:200;align-items:center;justify-content:center;padding:16px;background:rgba(1,9,23,.88);backdrop-filter:blur(8px)}
 .auth-box{background:var(--surface);border:1px solid var(--line);border-radius:22px;padding:26px;width:min(380px,100%);display:flex;flex-direction:column;gap:12px;box-shadow:var(--shadow)}
@@ -1711,6 +1711,11 @@ $("val").addEventListener("paste", e => {
 $("val").addEventListener("blur", () => { if(needsClean()) $("val").value = cleanVehicle($("val").value); });
 
 /* ---------- ورود با Supabase ---------- */
+if(typeof supabase === "undefined"){
+  $("authGate").classList.remove("checking");
+  $("authErr").textContent = "بارگذاری ناقص بود؛ صفحه را رفرش کن یا اینترنت/VPN را عوض کن";
+  throw new Error("supabase not loaded");
+}
 const sb = supabase.createClient(APP_CONFIG.url, APP_CONFIG.anonKey);
 let welcomed = false;
 function applySession(s){
@@ -1998,10 +2003,19 @@ const XL_COLS = ["کد یکتا", "نام شرکت", "نوع بیمه", "شما�
   "نام خودرو", "سال ساخت", "شماره پلاک خودرو", "شماره موتور", "شماره شاسی", "شماره VIN",
   "تاریخ شروع", "تاریخ پایان", "درصد تخفیف ثالث", "درصد تخفیف حوادث راننده",
   "خسارت", "الحاقیه", "جزییات خسارت"];
-function downloadExcel(){
+function loadXlsx(){
+  return new Promise((res, rej) => {
+    if(window.XLSX) return res();
+    const s = document.createElement("script");
+    s.src = "https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js";
+    s.onload = res; s.onerror = () => rej(new Error("load"));
+    document.head.appendChild(s);
+  });
+}
+async function downloadExcel(){
   const p = pLast;
   if(!p || !p.rows || !p.rows.length){ flashMsg("اول یک استعلام بگیر تا نتیجه‌ای برای دانلود باشد"); return; }
-  if(!window.XLSX){ flashMsg("کتابخانه‌ی اکسل لود نشده؛ صفحه را رفرش کن"); return; }
+  try{ await loadXlsx(); }catch(e){ flashMsg("کتابخانه‌ی اکسل لود نشد؛ اینترنت را چک کن"); return; }
   const data = p.rows.map(r => {
     const o = {};
     XL_COLS.forEach(c => { o[c] = String(r[c] === undefined || r[c] === null ? "" : r[c]).replace(/\n/g, " ؛ "); });
