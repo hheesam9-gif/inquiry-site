@@ -648,6 +648,7 @@ thead th + th{
 <script src="config.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/lenis@1.1.13/dist/lenis.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <style>
 #authGate{position:fixed;inset:0;z-index:200;align-items:center;justify-content:center;padding:16px;background:rgba(1,9,23,.88);backdrop-filter:blur(8px)}
 .auth-box{background:var(--surface);border:1px solid var(--line);border-radius:22px;padding:26px;width:min(380px,100%);display:flex;flex-direction:column;gap:12px;box-shadow:var(--shadow)}
@@ -819,8 +820,9 @@ button.warn-btn{background:linear-gradient(115deg,#d97706,#f59e0b)!important;box
     <button class="fab-item" id="adminBtn" type="button" style="--a:90deg;display:none" title="تنظیمات ادمین"><svg viewBox="0 0 24 24"><path d="M4 6h8M16 6h4M4 12h4M12 12h8M4 18h10M18 18h2"/><circle cx="14" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="16" cy="18" r="2"/></svg></button>
      <button class="fab-item" id="maintBtn" type="button" style="--a:69deg;--r:165px;display:none" title="قفل پنل نماینده‌ها"><svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></button>
     <button class="fab-item" id="notifBtn" type="button" style="--a:100deg;--r:165px;display:none" title="پیام قفل / اعلان"><svg viewBox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.7 21a2 2 0 0 1-3.4 0"/></svg></button>
-     <button class="fab-item" id="statsBtn" type="button" style="--a:85deg;--r:240px;display:none" title="آمار استعلام نماینده‌ها"><svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-8M22 20H2"/></svg></button>
-  </div>
+     <button class="fab-item" id="statsBtn" type="button" style="--a:27deg;--r:160px;display:none" title="آمار استعلام نماینده‌ها"><svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-8M22 20H2"/></svg></button>
+     <button class="fab-item" id="dlBtn" type="button" title="دانلود نتیجه‌ی استعلام (اکسل)"><svg viewBox="0 0 24 24"><path d="M12 4v11M7 11l5 5 5-5M5 20h14"/></svg></button>
+    </div>
 
 <div id="capModal">
   <div class="cap-box">
@@ -877,21 +879,53 @@ button.warn-btn{background:linear-gradient(115deg,#d97706,#f59e0b)!important;box
   </div>
 </div>
 <style>
-#statsModal{display:none;position:fixed;inset:0;z-index:170;background:rgba(8,10,20,.55);backdrop-filter:blur(6px);align-items:center;justify-content:center;padding:16px}
-#statsModal .cap-box{max-height:90vh;overflow-y:auto;width:min(460px,100%)}
-.st-row{margin-top:8px}
-.st-head{width:100%;text-align:start;display:block}
-.st-det{padding:8px 14px;margin-top:4px;border:1px solid var(--line);border-radius:12px;background:var(--field)}
-.st-line{padding:3px 0;font-weight:600}
+#statsModal{display:none;position:fixed;inset:0;z-index:170;background:rgba(1,9,23,.7);backdrop-filter:blur(8px);align-items:center;justify-content:center;padding:16px}
+.stx{width:min(480px,100%);max-height:90vh;overflow-y:auto;background:var(--surface);border:1px solid color-mix(in srgb,var(--accent) 30%,var(--line));border-radius:24px;box-shadow:var(--shadow),0 0 50px var(--glow)}
+.stx-head{display:flex;align-items:center;gap:12px;padding:20px 22px 16px;border-bottom:1px solid var(--line);background:linear-gradient(120deg,color-mix(in srgb,var(--accent) 20%,var(--surface)),var(--surface))}
+.stx-ic{width:42px;height:42px;border-radius:14px;display:grid;place-items:center;color:#fff;background:linear-gradient(120deg,var(--accent),var(--accent2));box-shadow:0 8px 20px var(--glow)}
+.stx-ic svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.stx-head h3{margin:0;font-size:18px;font-weight:800}
+.stx-body{padding:18px 22px 22px}
+.stx-date{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.stx-date input{flex:1 1 150px;min-height:46px;padding:8px 12px;border:1px solid var(--line);border-radius:12px;background:var(--field);color:var(--ink);font:inherit}
+.stx-fa{padding:8px 14px;border-radius:999px;background:var(--accent-soft);color:var(--accent-ink);font-weight:800;font-size:13px;white-space:nowrap}
+.stx-total{display:flex;align-items:baseline;gap:8px;margin:16px 0 4px}
+.stx-total b{font-size:46px;line-height:1;font-weight:900;background:linear-gradient(180deg,var(--accent),var(--accent2));-webkit-background-clip:text;background-clip:text;color:transparent}
+.stx-total span{color:var(--muted);font-weight:700}
+.stx-empty{padding:26px 10px;text-align:center;color:var(--muted);font-weight:600}
+.stx-card{margin-top:10px;border:1px solid var(--line);border-radius:16px;background:var(--field);overflow:hidden;transition:border-color .2s,box-shadow .2s}
+.stx-card:hover,.stx-card.open{border-color:var(--accent)}
+.stx-card.open{box-shadow:0 0 0 3px var(--glow)}
+.stx-top{display:flex;align-items:center;gap:12px;padding:12px 14px;cursor:pointer;outline:none}
+.stx-mid{flex:1;display:flex;flex-direction:column;gap:6px}
+.stx-name{font-weight:800;font-size:14.5px;direction:ltr;text-align:start;unicode-bidi:isolate}
+.stx-bar{height:6px;border-radius:99px;background:var(--surface2);overflow:hidden}
+.stx-bar i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,var(--accent),var(--accent2))}
+.stx-n{font-size:24px;font-weight:900;color:var(--accent-ink);min-width:34px;text-align:center}
+.stx-chev{color:var(--faint);font-size:20px;font-weight:800;transition:transform .2s}
+.stx-card.open .stx-chev{transform:rotate(-90deg)}
+.stx-det{display:none;padding:4px 14px 12px;border-top:1px dashed var(--line)}
+.stx-card.open .stx-det{display:block}
+.stx-line{display:grid;grid-template-columns:96px 1fr 56px;align-items:center;gap:10px;padding:7px 0;font-size:13px;font-weight:700}
+.stx-line .stx-bar{height:5px}
+.stx-line .stx-c{text-align:end;color:var(--accent-ink)}
+.stx-line.zero{opacity:.4}
 </style>
 <div id="statsModal">
-  <div class="cap-box" data-lenis-prevent>
-    <h3>آمار استعلام نماینده‌ها</h3>
-    <label for="stDate">تاریخ</label>
-    <input id="stDate" type="date" class="ltr">
-    <p id="stFa" style="margin:8px 0 0;color:var(--muted)"></p>
-    <div id="stList" style="margin-top:10px"></div>
-    <div class="cap-btns"><button class="ghost" id="stClose" type="button">بستن</button></div>
+  <div class="stx" data-lenis-prevent>
+    <div class="stx-head">
+      <div class="stx-ic"><svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-8M22 20H2"/></svg></div>
+      <h3>آمار استعلام نماینده‌ها</h3>
+    </div>
+    <div class="stx-body">
+      <div class="stx-date">
+        <input id="stDate" type="date" class="ltr">
+        <span class="stx-fa" id="stFa"></span>
+      </div>
+      <div class="stx-total"><b id="stTotal">0</b><span>استعلام در این روز</span></div>
+      <div id="stList"></div>
+      <div class="cap-btns" style="margin-top:16px"><button class="ghost" id="stClose" type="button">بستن</button></div>
+    </div>
   </div>
 </div>
 <div id="toast" role="status" aria-live="polite"></div>
@@ -1832,6 +1866,7 @@ function applyAdmin(s){
   $("maintBtn").style.display = isAdmin ? "" : "none";
   $("notifBtn").style.display = isAdmin ? "" : "none";
   $("statsBtn").style.display = isAdmin ? "" : "none";
+  layoutFab();
   if(!s) showMaint(false);
 }
 async function refreshSettings(){
@@ -1910,15 +1945,38 @@ async function loadStats(){
   });
   box.innerHTML = "";
   const names = Object.keys(by).sort((a, b) => by[b].total - by[a].total);
-  if(!names.length){ box.textContent = "در این تاریخ استعلامی ثبت نشده."; return; }
+  const grand = names.reduce((s, u) => s + by[u].total, 0);
+  $("stTotal").textContent = grand;
+  if(!names.length){ box.appendChild(el("div", "stx-empty", "در این تاریخ استعلامی ثبت نشده.")); return; }
   names.forEach(u => {
-    const row = el("div", "st-row");
-    const head = el("button", "ghost st-head", u + " — " + by[u].total + " استعلام");
-    const det = el("div", "st-det");
-    det.style.display = "none";
-    OPTIONS.forEach(o => det.appendChild(el("div", "st-line", o + ": " + (by[u].opts[o] || 0) + " بار")));
-    head.onclick = () => { det.style.display = det.style.display === "none" ? "block" : "none"; };
-    row.appendChild(head); row.appendChild(det); box.appendChild(row);
+    const t = by[u].total;
+    const card = el("div", "stx-card");
+    const top = el("div", "stx-top");
+    top.tabIndex = 0; top.setAttribute("role", "button");
+    const mid = el("div", "stx-mid");
+    mid.appendChild(el("span", "stx-name", u));
+    const bar = el("div", "stx-bar"), fill = document.createElement("i");
+    fill.style.width = Math.round(t * 100 / grand) + "%";
+    bar.appendChild(fill); mid.appendChild(bar);
+    top.appendChild(letterAvatar(u));
+    top.appendChild(mid);
+    top.appendChild(el("span", "stx-n", String(t)));
+    top.appendChild(el("span", "stx-chev", "‹"));
+    const det = el("div", "stx-det");
+    OPTIONS.forEach(o => {
+      const c = by[u].opts[o] || 0;
+      const line = el("div", "stx-line" + (c ? "" : " zero"));
+      line.appendChild(el("span", "", o));
+      const b = el("div", "stx-bar"), f = document.createElement("i");
+      f.style.width = Math.round(c * 100 / t) + "%";
+      b.appendChild(f); line.appendChild(b);
+      line.appendChild(el("span", "stx-c", c + " بار"));
+      det.appendChild(line);
+    });
+    const toggle = () => card.classList.toggle("open");
+    top.onclick = toggle;
+    top.onkeydown = e => { if(e.key === "Enter" || e.key === " "){ e.preventDefault(); toggle(); } };
+    card.appendChild(top); card.appendChild(det); box.appendChild(card);
   });
 }
 $("statsBtn").onclick = () => {
@@ -1928,6 +1986,58 @@ $("statsBtn").onclick = () => {
   loadStats();
 };
 $("stDate").addEventListener("change", loadStats);
+/* ---------- دانلود نتیجه‌ی استعلام به صورت اکسل ---------- */
+function flashMsg(text){
+  const t = $("toast");
+  t.textContent = text;
+  t.classList.add("on");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove("on"), 2000);
+}
+const XL_COLS = ["کد یکتا", "نام شرکت", "نوع بیمه", "شماره بیمه نامه", "نام بیمه گذار", "کد ملی بیمه گذار",
+  "نام خودرو", "سال ساخت", "شماره پلاک خودرو", "شماره موتور", "شماره شاسی", "شماره VIN",
+  "تاریخ شروع", "تاریخ پایان", "درصد تخفیف ثالث", "درصد تخفیف حوادث راننده",
+  "خسارت", "الحاقیه", "جزییات خسارت"];
+function downloadExcel(){
+  const p = pLast;
+  if(!p || !p.rows || !p.rows.length){ flashMsg("اول یک استعلام بگیر تا نتیجه‌ای برای دانلود باشد"); return; }
+  if(!window.XLSX){ flashMsg("کتابخانه‌ی اکسل لود نشده؛ صفحه را رفرش کن"); return; }
+  const data = p.rows.map(r => {
+    const o = {};
+    XL_COLS.forEach(c => { o[c] = String(r[c] === undefined || r[c] === null ? "" : r[c]).replace(/\n/g, " ؛ "); });
+    return o;
+  });
+  const ws = XLSX.utils.json_to_sheet(data, {header: XL_COLS});
+  ws["!cols"] = XL_COLS.map(c => ({wch: Math.min(40, Math.max(c.length, ...data.map(d => d[c].length)) + 2)}));
+  const wb = XLSX.utils.book_new();
+  wb.Workbook = {Views: [{RTL: true}]};
+  XLSX.utils.book_append_sheet(wb, ws, "استعلام");
+  const sv = String(p.search_value || "").replace(/[\\\/:*?"<>|\s]+/g, "_");
+  XLSX.writeFile(wb, "استعلام_" + sv + "_" + ymd(new Date()) + ".xlsx");
+  toggleFab(false);
+  flashMsg("فایل اکسل ذخیره شد");
+}
+$("dlBtn").onclick = downloadExcel;
+/* ---------- چینش دکمه‌های شناور روی کمان، با فاصله‌ی مساوی ---------- */
+const FAB_RINGS_ADMIN = [
+  {r: 92,  ids: ["themeBtn", "logoutBtn", "adminBtn"]},
+  {r: 160, ids: ["maintBtn", "notifBtn", "statsBtn", "dlBtn"]}
+];
+const FAB_RINGS_AGENT = [
+  {r: 92,  ids: ["themeBtn", "dlBtn", "logoutBtn"]}
+];
+function layoutFab(){
+  (isAdmin ? FAB_RINGS_ADMIN : FAB_RINGS_AGENT).forEach(ring => {
+    const els = ring.ids.map(id => $(id)).filter(b => b && b.style.display !== "none");
+    const n = els.length;
+    els.forEach((b, i) => {
+      const a = n === 1 ? 45 : i * 90 / (n - 1);   // از 0 درجه (راست) تا 90 درجه (بالا)
+      b.style.setProperty("--a", a + "deg");
+      b.style.setProperty("--r", ring.r + "px");
+    });
+  });
+}
+layoutFab();
 $("stClose").onclick = () => { $("statsModal").style.display = "none"; };
 $("statsModal").addEventListener("click", e => { if(e.target === $("statsModal")) $("statsModal").style.display = "none"; });
 $("adminModal").addEventListener("click", e => {
