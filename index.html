@@ -733,6 +733,7 @@ button.warn-btn{background:linear-gradient(115deg,#d97706,#f59e0b)!important;box
 .fab{z-index:160!important}
 .fab .fab-item.locked{background:linear-gradient(115deg,#d97706,#f59e0b);color:#fff;border-color:transparent}
 #maintGate{z-index:150}
+#maintModal{display:none;position:fixed;inset:0;z-index:170;background:rgba(8,10,20,.55);backdrop-filter:blur(6px);align-items:center;justify-content:center;padding:16px}
 </style>
 </head>
 <body>
@@ -817,6 +818,7 @@ button.warn-btn{background:linear-gradient(115deg,#d97706,#f59e0b)!important;box
     <button class="fab-item" id="logoutBtn" type="button" style="--a:48deg" title="خروج"><svg viewBox="0 0 24 24"><path d="M9 4H5a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1h4M16 8l4 4-4 4M20 12H9"/></svg></button>
     <button class="fab-item" id="adminBtn" type="button" style="--a:90deg;display:none" title="تنظیمات ادمین"><svg viewBox="0 0 24 24"><path d="M4 6h8M16 6h4M4 12h4M12 12h8M4 18h10M18 18h2"/><circle cx="14" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="16" cy="18" r="2"/></svg></button>
      <button class="fab-item" id="maintBtn" type="button" style="--a:69deg;--r:165px;display:none" title="قفل پنل نماینده‌ها"><svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></button>
+     <button class="fab-item" id="notifBtn" type="button" style="--a:112deg;--r:128px;display:none" title="پیام قفل / اعلان"><svg viewBox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.7 21a2 2 0 0 1-3.4 0"/></svg></button>
   </div>
 
 <div id="capModal">
@@ -849,9 +851,7 @@ button.warn-btn{background:linear-gradient(115deg,#d97706,#f59e0b)!important;box
     <label class="sw"><input type="checkbox" id="admFan"> استعلام از فناوران فعال باشد</label>
     <label for="admSrc">نرم‌افزار فناوران</label>
     <select id="admSrc"><option value="arman">آرمان</option><option value="ma">بیمه ما</option></select>
-    <hr style="border:0;border-top:1px solid var(--line);margin:14px 0">
-<strong style="font-size:14px">قفل پنل نماینده‌ها</strong>
-<textarea id="admMaintMsg" rows="4" style="width:100%;margin-top:8px;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:var(--field);color:var(--ink);font:inherit"></textarea>
+
 
     <p id="admMsg" style="margin-top:12px"></p>
     <hr style="border:0;border-top:1px solid var(--line);margin:14px 0">
@@ -864,7 +864,17 @@ button.warn-btn{background:linear-gradient(115deg,#d97706,#f59e0b)!important;box
     <div class="cap-btns"><button class="ghost" id="admClose" type="button">بستن</button><button id="admSave" type="button">ذخیره</button></div>
   </div>
 </div>
-
+<div id="maintModal" class="modal-simple">
+  <div class="cap-box" data-lenis-prevent>
+    <h3>پیام قفل پنل نماینده‌ها</h3>
+    <textarea id="admMaintMsg" rows="5" style="width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:var(--field);color:var(--ink);font:inherit"></textarea>
+    <p id="maintMsgStatus" style="margin-top:8px"></p>
+    <div class="cap-btns">
+      <button class="ghost" id="maintClose" type="button">بستن</button>
+      <button id="maintSave" type="button">ذخیره پیام</button>
+    </div>
+  </div>
+</div>
 <div id="toast" role="status" aria-live="polite"></div>
 
 <script>
@@ -1801,6 +1811,7 @@ function applyAdmin(s){
   isAdmin = role === "admin";
   $("adminBtn").style.display = isAdmin ? "" : "none";
   $("maintBtn").style.display = isAdmin ? "" : "none";
+  $("notifBtn").style.display = isAdmin ? "" : "none";
   if(!s) showMaint(false);
 }
 async function refreshSettings(){
@@ -1808,7 +1819,7 @@ async function refreshSettings(){
   if(!data) return;
     maintOn = data.maintenance_enabled === true;
     paintMaint();
-    if(document.activeElement !== $("admMaintMsg")) $("admMaintMsg").value = data.maintenance_message || DEFAULT_MAINT;
+    if($("maintModal").style.display !== "flex") $("admMaintMsg").value = data.maintenance_message || DEFAULT_MAINT;
   showMaint(data.maintenance_enabled === true && !isAdmin, data.maintenance_message);
   const fan = data.fanavaran_enabled !== false, par = data.pardis_enabled !== false;
   const need = {"شماره بیمه نامه": fan, "پلاک": par, "شماره موتور": fan || par, "شماره شاسی": fan || par, "شماره VIN": fan || par};
@@ -1836,9 +1847,25 @@ $("adminBtn").onclick = async () => {
   $("admFan").checked = data.fanavaran_enabled;
   $("admPar").checked = data.pardis_enabled !== false;
   $("admSrc").value = data.fanavaran_source;
-    maintOn = data.maintenance_enabled === true;
-  $("admMaintMsg").value = data.maintenance_message || DEFAULT_MAINT;
+
   paintMaint();
+};
+$("notifBtn").onclick = async () => {
+  toggleFab(false);
+  $("maintMsgStatus").textContent = "";
+  $("maintModal").style.display = "flex";
+  const {data} = await sb.from("settings").select("maintenance_message").eq("id", 1).single();
+  $("admMaintMsg").value = (data && data.maintenance_message) || DEFAULT_MAINT;
+};
+$("maintClose").onclick = () => { $("maintModal").style.display = "none"; };
+$("maintModal").addEventListener("click", e => { if(e.target === $("maintModal")) $("maintModal").style.display = "none"; });
+$("maintSave").onclick = async () => {
+  const msg = $("admMaintMsg").value.trim() || DEFAULT_MAINT;
+  const {error} = await sb.from("settings").update({
+    maintenance_message: msg, updated_at: new Date().toISOString()
+  }).eq("id", 1);
+  $("maintMsgStatus").textContent = error ? "ذخیره نشد: " + error.message : "ذخیره شد ✔";
+  if(!error) refreshSettings();
 };
 $("admClose").onclick = () => { $("adminModal").style.display = "none"; };
 $("adminModal").addEventListener("click", e => {
@@ -1853,7 +1880,6 @@ $("maintBtn").onclick = async () => {
   const next = !maintOn;
   const {error} = await sb.from("settings").update({
     maintenance_enabled: next,
-    maintenance_message: $("admMaintMsg").value.trim() || DEFAULT_MAINT,
     updated_at: new Date().toISOString()
   }).eq("id", 1);
   if(error){ alert("انجام نشد: " + error.message); return; }
