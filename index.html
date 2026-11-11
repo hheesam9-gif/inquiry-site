@@ -2114,56 +2114,48 @@ function logoUrl(name){
 const PDF_CSS = `
 @page{size:A4 landscape;margin:0}
 *{box-sizing:border-box;-webkit-print-color-adjust:exact;print-color-adjust:exact}
-html,body{margin:0;background:#061329}
-body{font-family:Vazirmatn,Tahoma,"Segoe UI",sans-serif;color:#edf6ff;font-size:11px;line-height:1.7;
+html,body{margin:0;background:#061329;width:297mm;height:209mm;overflow:hidden}
+body{font-family:Vazirmatn,Tahoma,"Segoe UI",sans-serif;color:#edf6ff;font-size:11px;line-height:1.5;
   background:radial-gradient(ellipse at 10% 0%,rgba(0,130,255,.22),transparent 40%),
              radial-gradient(ellipse at 95% 15%,rgba(0,205,255,.12),transparent 35%),#061329}
-.pg{padding:10mm 10mm 12mm}
-.banner{display:block;width:100%;height:auto;border-radius:14px;margin-bottom:8mm}
-.title{font-size:22px;font-weight:900;margin:0 0 6mm;text-align:center}
-.meta{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:6mm}
-.chip{padding:4px 14px;border-radius:999px;font-weight:800;font-size:11px;background:rgba(0,139,255,.16);
+.pg{width:297mm;height:209mm;padding:6mm 8mm;display:flex;flex-direction:column;gap:3mm;overflow:hidden}
+.banner{display:block;height:24mm;width:auto;max-width:100%;margin:0 auto;border-radius:10px;flex:none}
+.meta{display:flex;gap:6px;justify-content:center;flex:none}
+.chip{padding:2px 12px;border-radius:999px;font-weight:800;font-size:10px;background:rgba(0,139,255,.16);
   color:#65caff;border:1px solid rgba(0,160,255,.3)}
 .chip bdi{direction:ltr;unicode-bidi:isolate}
-.card{break-inside:avoid;page-break-inside:avoid;margin-bottom:6mm;border-radius:18px;overflow:hidden;
-  background:linear-gradient(160deg,#0d2750,#0a1d3e);border:1px solid rgba(81,157,255,.35);
-  box-shadow:0 0 0 1px rgba(0,160,255,.06)}
-.ch{display:flex;align-items:center;gap:12px;padding:10px 16px;
-  background:linear-gradient(110deg,#0b3a78,#082653 55%,#061a38);border-bottom:2px solid rgba(0,200,255,.35)}
-.lgo{width:44px;height:38px;border-radius:10px;background:#fff;display:grid;place-items:center;padding:3px;flex:none}
+.box{flex:1;min-height:0;display:flex;align-items:flex-start;justify-content:center;overflow:hidden}
+.zoom{width:281mm;transform-origin:top center}
+table{width:100%;border-collapse:separate;border-spacing:0;border:1px solid rgba(73,157,255,.4);border-radius:14px;overflow:hidden;
+  background:linear-gradient(160deg,#0d2750,#0a1d3e);table-layout:fixed}
+th{background:linear-gradient(110deg,#103c79,#0b2b59 55%,#0d3973);color:#eaf6ff;font-size:10px;font-weight:800;
+  padding:6px 3px;border-bottom:2px solid rgba(0,200,255,.4)}
+td{padding:5px 4px;text-align:center;vertical-align:middle;border-bottom:1px solid rgba(81,157,255,.18);
+  font-size:10px;font-weight:700;overflow-wrap:anywhere}
+tr:nth-child(even) td{background:rgba(17,42,81,.5)}
+tr:last-child td{border-bottom:0}
+.l{direction:ltr;unicode-bidi:isolate}
+.sub{display:block;font-size:8.5px;color:#a9c3e6;font-weight:600}
+.k{color:#7fa6d6;font-size:8.5px;font-weight:700}
+.co{display:flex;flex-direction:column;align-items:center;gap:1px}
+.lgo{width:30px;height:26px;border-radius:7px;background:#fff;display:grid;place-items:center;padding:2px}
 .lgo img{max-width:100%;max-height:100%;object-fit:contain}
-.lgo span{color:#0757b8;font-weight:900;font-size:18px}
-.cn{font-size:15px;font-weight:900}
-.ct{font-size:10.5px;color:#a9d7ff;font-weight:600}
-.num{margin-inline-start:auto;text-align:left;direction:ltr}
-.num small{display:block;color:#a9d7ff;font-size:9.5px;direction:rtl;text-align:right}
-.num b{font-size:13px}
-.st{padding:3px 14px;border-radius:999px;font-weight:800;font-size:11px;border:1px solid}
+.lgo span{color:#0757b8;font-weight:900;font-size:13px}
+.st{display:inline-block;margin-top:2px;padding:0 8px;border-radius:999px;font-weight:800;font-size:8.5px;border:1px solid}
 .st.ok{color:#49e6b0;background:rgba(16,185,129,.16);border-color:rgba(52,211,153,.5)}
 .st.warn{color:#ffd071;background:rgba(245,158,11,.16);border-color:rgba(245,158,11,.5)}
 .st.bad{color:#ff91a7;background:rgba(244,63,94,.16);border-color:rgba(244,63,94,.5)}
 .st.soon{color:#75d5ff;background:rgba(14,165,233,.16);border-color:rgba(56,189,248,.5)}
-.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:0}
-.cell{padding:8px 14px;border-bottom:1px solid rgba(81,157,255,.15);border-inline-start:1px solid rgba(81,157,255,.12)}
-.cell .k{font-size:9.5px;color:#7fa6d6;font-weight:700}
-.cell .v{font-weight:800;font-size:12px;overflow-wrap:anywhere}
-.cell .v.l{direction:ltr;text-align:right;unicode-bidi:isolate}
-.disc{display:flex;gap:10px;padding:10px 14px;align-items:center;flex-wrap:wrap;background:rgba(0,0,0,.18)}
-.dbox{flex:1;min-width:120px;text-align:center;border-radius:14px;padding:6px 10px;
-  background:rgba(0,200,150,.1);border:1px solid rgba(52,211,153,.3)}
-.dbox .k{font-size:9.5px;color:#a9c3e6;font-weight:700}
-.dbox .v{font-size:22px;font-weight:900;color:#37e5a4;line-height:1.2}
-.tags{display:flex;gap:6px;flex-wrap:wrap;padding:8px 14px 12px}
-.tg{padding:2px 12px;border-radius:999px;font-weight:700;font-size:10.5px;background:rgba(0,139,255,.16);color:#65caff}
+.pc{font-size:15px;font-weight:900;color:#37e5a4}
+.tg{display:inline-block;margin:1px;padding:0 7px;border-radius:999px;font-weight:700;font-size:8.5px;background:rgba(0,139,255,.16);color:#65caff}
 .tg.r{background:rgba(244,63,94,.16);color:#ff91a7;border:1px solid rgba(244,63,94,.4)}
-.tg.cnt{background:#087bff;color:#fff}.tg.cnt.r{background:#e11d48;color:#fff}
-.foot{margin-top:8mm;text-align:center;direction:ltr}
-.foot i{display:block;height:2px;width:60%;margin:0 auto 8px;background:linear-gradient(90deg,transparent,#087bff,#00c8ff,#087bff,transparent)}
-.foot b{font-size:14px;letter-spacing:1.5px;color:#7fd8ff}
+.bad-t{color:#ff91a7;font-weight:900}
+.foot{flex:none;text-align:center;direction:ltr}
+.foot i{display:block;height:2px;width:50%;margin:0 auto 3px;background:linear-gradient(90deg,transparent,#087bff,#00c8ff,#087bff,transparent)}
+.foot b{font-size:11px;letter-spacing:1.5px;color:#7fd8ff}
 `;
 function reportCard(d, i){
   const g = k => (d[k] == null ? "" : d[k]).toString().trim();
-  const cell = (k, v, ltr) => `<div class="cell"><div class="k">${k}</div><div class="v${ltr ? " l" : ""}">${v ? esc(v) : "—"}</div></div>`;
   const life = g("تاریخ پایان") ? lifeInfo(g("تاریخ شروع"), g("تاریخ پایان")) : null;
   const name = g("نام شرکت");
   const lu = name ? logoUrl(name) : "";
@@ -2173,43 +2165,25 @@ function reportCard(d, i){
   const endo = g("الحاقیه").split("\n").map(s => s.trim()).filter(Boolean);
   const loss = g("جزییات خسارت").split("\n").map(s => s.trim()).filter(Boolean);
   const groups = new Map();
-  loss.forEach(l => { const key = fld(l, "نوع خسارت") + "||" + fld(l, "تاریخ خسارت"); if(!groups.has(key)) groups.set(key, 0); groups.set(key, groups.get(key) + 1); });
+  loss.forEach(l => { const key = fld(l, "نوع خسارت") + "||" + fld(l, "تاریخ خسارت"); groups.set(key, (groups.get(key) || 0) + 1); });
   let tags = "";
-  if(endo.length){
-    tags += `<span class="tg cnt">${endo.length} الحاقیه</span>`;
-    endo.forEach(l => { const m = l.match(/نوع:\s*([^|]+)/); tags += `<span class="tg">${esc(m ? m[1].trim() : "الحاقیه")}</span>`; });
-  }
-  if(groups.size){
-    tags += `<span class="tg cnt r">${groups.size} خسارت</span>`;
-    groups.forEach((n, key) => { const [t, dt] = key.split("||"); tags += `<span class="tg r">${esc(["خسارت " + t, dt].filter(Boolean).join(" · "))}${n > 1 ? " · " + n + " پرداختی" : ""}</span>`; });
-  }
-  if(!tags) tags = `<span class="tg">بدون الحاقیه و خسارت</span>`;
-  return `<div class="card">
-    <div class="ch">${logo}
-      <div><div class="cn">${esc(name || "—")}</div><div class="ct">${esc(g("نوع بیمه"))}</div></div>
-      ${life ? `<span class="st ${life.cls}">${esc(life.txt)}</span>` : ""}
-      <div class="num"><small>شماره بیمه‌نامه</small><b>${esc(g("شماره بیمه نامه") || "—")}</b></div>
-    </div>
-    <div class="grid">
-      ${cell("بیمه‌گذار", g("نام بیمه گذار"))}
-      ${cell("کد ملی", g("کد ملی بیمه گذار"), true)}
-      ${cell("خودرو", [g("نام خودرو"), g("سال ساخت") && "مدل " + g("سال ساخت")].filter(Boolean).join(" · "))}
-      ${cell("پلاک", g("شماره پلاک خودرو"))}
-      ${cell("شماره موتور", g("شماره موتور"), true)}
-      ${cell("شماره شاسی", g("شماره شاسی"), true)}
-      ${cell("شماره VIN", g("شماره VIN"), true)}
-      ${cell("کد یکتا", g("کد یکتا"), true)}
-      ${cell("تاریخ شروع", g("تاریخ شروع"), true)}
-      ${cell("تاریخ پایان", g("تاریخ پایان"), true)}
-      ${cell("وضعیت خسارت", g("خسارت") || "ندارد")}
-      ${cell("ردیف", String(i + 1))}
-    </div>
-    <div class="disc">
-      <div class="dbox"><div class="k">تخفیف ثالث</div><div class="v">${esc(fmtPct(g("درصد تخفیف ثالث")) || "—")}</div></div>
-      <div class="dbox"><div class="k">تخفیف حوادث راننده</div><div class="v">${esc(fmtPct(g("درصد تخفیف حوادث راننده")) || "—")}</div></div>
-    </div>
-    <div class="tags">${tags}</div>
-  </div>`;
+  if(endo.length) tags += `<span class="tg">${endo.length} الحاقیه</span>`;
+  groups.forEach((n, key) => { const [t, dt] = key.split("||"); tags += `<span class="tg r">${esc(["خسارت " + t, dt].filter(Boolean).join(" · "))}</span>`; });
+  const lossTxt = g("خسارت") === "دارد" ? `<span class="bad-t">خسارت دارد</span>` : `<span class="k">${esc(g("خسارت") || "ندارد")}</span>`;
+  const kv = (k, v) => v ? `<div><span class="k">${k}: </span><span class="l">${esc(v)}</span></div>` : "";
+  return `<tr>
+    <td class="l">${esc(g("کد یکتا") || "—")}</td>
+    <td><div class="co">${logo}<span>${esc(name || "—")}</span><span class="sub">${esc(g("نوع بیمه"))}</span></div></td>
+    <td class="l">${esc(g("شماره بیمه نامه") || "—")}</td>
+    <td>${esc(g("نام بیمه گذار") || "—")}<span class="sub l">${esc(g("کد ملی بیمه گذار"))}</span></td>
+    <td>${esc(g("نام خودرو") || "")}<span class="sub">${g("سال ساخت") ? "مدل " + esc(g("سال ساخت")) : ""}</span><span class="sub">${esc(g("شماره پلاک خودرو"))}</span></td>
+    <td style="text-align:right">${kv("موتور", g("شماره موتور"))}${kv("شاسی", g("شماره شاسی"))}${kv("وین", g("شماره VIN"))}</td>
+    <td class="l">${esc(g("تاریخ شروع") || "—")}</td>
+    <td><span class="l">${esc(g("تاریخ پایان") || "—")}</span>${life ? `<br><span class="st ${life.cls}">${esc(life.txt)}</span>` : ""}</td>
+    <td class="pc">${esc(fmtPct(g("درصد تخفیف ثالث")) || "—")}</td>
+    <td class="pc">${esc(fmtPct(g("درصد تخفیف حوادث راننده")) || "—")}</td>
+    <td>${lossTxt}<div>${tags}</div></td>
+  </tr>`;
 }
 async function downloadPdf(){
   const p = pLast;
@@ -2219,30 +2193,38 @@ async function downloadPdf(){
   const title = "استعلام_" + sv + "_" + ymd(new Date());
   const now = new Date();
   const when = now.toLocaleDateString("fa-IR") + " - " + now.toLocaleTimeString("fa-IR", {hour: "2-digit", minute: "2-digit"});
+  const heads = ["کد یکتا", "شرکت", "شماره بیمه‌نامه", "بیمه‌گذار", "خودرو / مدل / پلاک", "موتور / شاسی / وین", "تاریخ شروع", "تاریخ پایان", "تخفیف ثالث", "تخفیف راننده", "سوابق"];
+  const widths = [8, 8, 11, 11, 11, 15, 7, 9, 5, 5, 10];
   const html = `<!doctype html><html lang="fa" dir="rtl"><head><meta charset="utf-8"><title>${esc(title)}</title>
     <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;600;800;900&display=swap" rel="stylesheet">
     <style>${PDF_CSS}</style></head><body><div class="pg">
     <img class="banner" src="${esc(absUrl("banner.png"))}" alt="" onerror="this.style.display='none'">
-    <h1 class="title">گزارش استعلام بیمه‌نامه</h1>
     <div class="meta">
       <span class="chip">مقدار جستجو: <bdi>${esc(p.search_value || "")}</bdi></span>
       <span class="chip">تاریخ گزارش: ${esc(when)}</span>
       <span class="chip">تعداد بیمه‌نامه: ${p.rows.length}</span>
     </div>
-    ${p.rows.map(reportCard).join("")}
+    <div class="box"><div class="zoom" id="zm"><table>
+      <colgroup>${widths.map(w => `<col style="width:${w}%">`).join("")}</colgroup>
+      <thead><tr>${heads.map(h => `<th>${h}</th>`).join("")}</tr></thead>
+      <tbody>${p.rows.map(reportCard).join("")}</tbody>
+    </table></div></div>
     <div class="foot"><i></i><b>AZKI SWORD</b></div>
     </div></body></html>`;
   const fr = document.createElement("iframe");
-  fr.style.cssText = "position:fixed;right:0;bottom:0;width:0;height:0;border:0;visibility:hidden";
+  fr.style.cssText = "position:fixed;right:0;bottom:0;width:297mm;height:209mm;border:0;visibility:hidden";
   document.body.appendChild(fr);
   const doc = fr.contentDocument;
   doc.open(); doc.write(html); doc.close();
-  // صبر برای فونت و عکس‌ها (حداکثر ۴ ثانیه)
   const imgs = [...doc.images].map(im => im.complete ? 0 : new Promise(r => { im.onload = im.onerror = r; }));
   await Promise.race([
     Promise.all([doc.fonts ? doc.fonts.ready : 0, ...imgs]),
     new Promise(r => setTimeout(r, 4000))
   ]);
+  // کوچک کردن خودکار تا همه‌ی ردیف‌ها در یک صفحه جا شوند
+  const zm = doc.getElementById("zm"), box = zm.parentElement;
+  const k = Math.min(1, box.clientHeight / zm.scrollHeight);
+  if(k < 1){ zm.style.transform = "scale(" + k + ")"; }
   const w = fr.contentWindow;
   w.focus();
   w.onafterprint = () => setTimeout(() => fr.remove(), 500);
