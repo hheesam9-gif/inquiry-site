@@ -1333,7 +1333,7 @@ function letterAvatar(name){
 /* فقط خود لوگو: اگر عکس پس‌زمینه‌ی تخت دارد (سفید/مشکی/...) حذفش می‌کند؛
    اگر لوگو بخش‌های سفید دارد (مثل نوشته‌ی آسیا) دورش یک حاشیه‌ی تیره‌ی نازک می‌افتد تا روی صفحه‌ی روشن گم نشود */
 function cleanLogo(img, box){
-  const MAX = 300;
+  const MAX = 120;
   const k = Math.min(1, MAX / Math.max(img.naturalWidth, img.naturalHeight));
   const w = Math.max(1, Math.round(img.naturalWidth * k)), h = Math.max(1, Math.round(img.naturalHeight * k));
   const c = document.createElement("canvas");
