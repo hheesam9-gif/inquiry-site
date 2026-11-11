@@ -910,6 +910,17 @@ button.warn-btn{background:linear-gradient(115deg,#d97706,#f59e0b)!important;box
 .stx-line .stx-bar{height:5px}
 .stx-line .stx-c{text-align:end;color:var(--accent-ink)}
 .stx-line.zero{opacity:.4}
+#dlModal{display:none;position:fixed;inset:0;z-index:175;background:rgba(1,9,23,.7);backdrop-filter:blur(8px);align-items:center;justify-content:center;padding:16px}
+.dl-box{width:min(400px,100%);background:var(--surface);border:1px solid color-mix(in srgb,var(--accent) 30%,var(--line));border-radius:24px;padding:24px;box-shadow:var(--shadow),0 0 50px var(--glow);text-align:center}
+.dl-box h3{margin:0 0 4px;font-size:18px;font-weight:800}
+.dl-box p{margin:0 0 16px;color:var(--muted);font-size:13px;font-weight:600}
+.dl-opts{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.dl-opt{display:flex;flex-direction:column;align-items:center;gap:8px;padding:18px 10px;border-radius:18px;
+  background:var(--field);color:var(--ink);border:1px solid var(--line);box-shadow:none;font-size:15px}
+.dl-opt:hover:not(:disabled){border-color:var(--accent);background:var(--accent-soft);transform:translateY(-2px);filter:none}
+.dl-opt b{font-size:30px;line-height:1}
+.dl-opt small{color:var(--muted);font-weight:600;font-size:11.5px}
+.dl-opt.xl b{color:#37e5a4}.dl-opt.pf b{color:#ff6b81}
 </style>
 <div id="statsModal">
   <div class="stx" data-lenis-prevent>
@@ -926,6 +937,17 @@ button.warn-btn{background:linear-gradient(115deg,#d97706,#f59e0b)!important;box
       <div id="stList"></div>
       <div class="cap-btns" style="margin-top:16px"><button class="ghost" id="stClose" type="button">بستن</button></div>
     </div>
+  </div>
+</div>
+<div id="dlModal">
+  <div class="dl-box">
+    <h3>دانلود نتیجه‌ی استعلام</h3>
+    <p>فرمت فایل را انتخاب کن</p>
+    <div class="dl-opts">
+      <button class="dl-opt xl" id="dlXlsx" type="button"><b>📊</b>اکسل<small>Excel (.xlsx)</small></button>
+      <button class="dl-opt pf" id="dlPdf" type="button"><b>📄</b>پی‌دی‌اف<small>گزارش گرافیکی</small></button>
+    </div>
+    <div class="cap-btns" style="justify-content:center"><button class="ghost" id="dlCancel" type="button">انصراف</button></div>
   </div>
 </div>
 <div id="toast" role="status" aria-live="polite"></div>
@@ -2067,7 +2089,166 @@ async function downloadExcel(){
     flashMsg("فایل ذخیره شد (CSV؛ با اکسل باز می‌شود)");
   }
 }
-$("dlBtn").onclick = downloadExcel;
+/* ---------- انتخاب فرمت: اکسل یا PDF ---------- */
+function openDl(){
+  toggleFab(false);
+  if(!pLast || !pLast.rows || !pLast.rows.length){ flashMsg("اول یک استعلام بگیر تا نتیجه‌ای برای دانلود باشد"); return; }
+  $("dlModal").style.display = "flex";
+}
+function closeDl(){ $("dlModal").style.display = "none"; }
+$("dlBtn").onclick = openDl;
+$("dlCancel").onclick = closeDl;
+$("dlModal").addEventListener("click", e => { if(e.target === $("dlModal")) closeDl(); });
+$("dlXlsx").onclick = () => { closeDl(); downloadExcel(); };
+$("dlPdf").onclick = () => { closeDl(); downloadPdf(); };
+
+/* ---------- گزارش PDF گرافیکی ---------- */
+const esc = s => String(s == null ? "" : s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const absUrl = p => new URL(p, location.href).href;
+function logoUrl(name){
+  const k = logoFor(name);
+  if(!k) return "";
+  const [lf, lv] = LOGO_FILES[k].split("?");
+  return absUrl("logos/" + encodeURIComponent(lf) + (lv ? "?" + lv : ""));
+}
+const PDF_CSS = `
+@page{size:A4 landscape;margin:0}
+*{box-sizing:border-box;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+html,body{margin:0;background:#061329}
+body{font-family:Vazirmatn,Tahoma,"Segoe UI",sans-serif;color:#edf6ff;font-size:11px;line-height:1.7;
+  background:radial-gradient(ellipse at 10% 0%,rgba(0,130,255,.22),transparent 40%),
+             radial-gradient(ellipse at 95% 15%,rgba(0,205,255,.12),transparent 35%),#061329}
+.pg{padding:10mm 10mm 12mm}
+.banner{display:block;width:100%;height:auto;border-radius:14px;margin-bottom:8mm}
+.title{font-size:22px;font-weight:900;margin:0 0 6mm;text-align:center}
+.meta{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:6mm}
+.chip{padding:4px 14px;border-radius:999px;font-weight:800;font-size:11px;background:rgba(0,139,255,.16);
+  color:#65caff;border:1px solid rgba(0,160,255,.3)}
+.chip bdi{direction:ltr;unicode-bidi:isolate}
+.card{break-inside:avoid;page-break-inside:avoid;margin-bottom:6mm;border-radius:18px;overflow:hidden;
+  background:linear-gradient(160deg,#0d2750,#0a1d3e);border:1px solid rgba(81,157,255,.35);
+  box-shadow:0 0 0 1px rgba(0,160,255,.06)}
+.ch{display:flex;align-items:center;gap:12px;padding:10px 16px;
+  background:linear-gradient(110deg,#0b3a78,#082653 55%,#061a38);border-bottom:2px solid rgba(0,200,255,.35)}
+.lgo{width:44px;height:38px;border-radius:10px;background:#fff;display:grid;place-items:center;padding:3px;flex:none}
+.lgo img{max-width:100%;max-height:100%;object-fit:contain}
+.lgo span{color:#0757b8;font-weight:900;font-size:18px}
+.cn{font-size:15px;font-weight:900}
+.ct{font-size:10.5px;color:#a9d7ff;font-weight:600}
+.num{margin-inline-start:auto;text-align:left;direction:ltr}
+.num small{display:block;color:#a9d7ff;font-size:9.5px;direction:rtl;text-align:right}
+.num b{font-size:13px}
+.st{padding:3px 14px;border-radius:999px;font-weight:800;font-size:11px;border:1px solid}
+.st.ok{color:#49e6b0;background:rgba(16,185,129,.16);border-color:rgba(52,211,153,.5)}
+.st.warn{color:#ffd071;background:rgba(245,158,11,.16);border-color:rgba(245,158,11,.5)}
+.st.bad{color:#ff91a7;background:rgba(244,63,94,.16);border-color:rgba(244,63,94,.5)}
+.st.soon{color:#75d5ff;background:rgba(14,165,233,.16);border-color:rgba(56,189,248,.5)}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:0}
+.cell{padding:8px 14px;border-bottom:1px solid rgba(81,157,255,.15);border-inline-start:1px solid rgba(81,157,255,.12)}
+.cell .k{font-size:9.5px;color:#7fa6d6;font-weight:700}
+.cell .v{font-weight:800;font-size:12px;overflow-wrap:anywhere}
+.cell .v.l{direction:ltr;text-align:right;unicode-bidi:isolate}
+.disc{display:flex;gap:10px;padding:10px 14px;align-items:center;flex-wrap:wrap;background:rgba(0,0,0,.18)}
+.dbox{flex:1;min-width:120px;text-align:center;border-radius:14px;padding:6px 10px;
+  background:rgba(0,200,150,.1);border:1px solid rgba(52,211,153,.3)}
+.dbox .k{font-size:9.5px;color:#a9c3e6;font-weight:700}
+.dbox .v{font-size:22px;font-weight:900;color:#37e5a4;line-height:1.2}
+.tags{display:flex;gap:6px;flex-wrap:wrap;padding:8px 14px 12px}
+.tg{padding:2px 12px;border-radius:999px;font-weight:700;font-size:10.5px;background:rgba(0,139,255,.16);color:#65caff}
+.tg.r{background:rgba(244,63,94,.16);color:#ff91a7;border:1px solid rgba(244,63,94,.4)}
+.tg.cnt{background:#087bff;color:#fff}.tg.cnt.r{background:#e11d48;color:#fff}
+.foot{margin-top:8mm;text-align:center;direction:ltr}
+.foot i{display:block;height:2px;width:60%;margin:0 auto 8px;background:linear-gradient(90deg,transparent,#087bff,#00c8ff,#087bff,transparent)}
+.foot b{font-size:14px;letter-spacing:1.5px;color:#7fd8ff}
+`;
+function reportCard(d, i){
+  const g = k => (d[k] == null ? "" : d[k]).toString().trim();
+  const cell = (k, v, ltr) => `<div class="cell"><div class="k">${k}</div><div class="v${ltr ? " l" : ""}">${v ? esc(v) : "—"}</div></div>`;
+  const life = g("تاریخ پایان") ? lifeInfo(g("تاریخ شروع"), g("تاریخ پایان")) : null;
+  const name = g("نام شرکت");
+  const lu = name ? logoUrl(name) : "";
+  const letter = (name.replace(/^بیمه\s*/, "").trim().charAt(0)) || "؟";
+  const logo = `<div class="lgo">${lu ? `<img src="${esc(lu)}" alt="" onerror="this.replaceWith(Object.assign(document.createElement('span'),{textContent:'${esc(letter)}'}))">` : `<span>${esc(letter)}</span>`}</div>`;
+  const fld = (line, k) => { const m = line.match(new RegExp(k + ":\\s*([^|]+)")); return m ? m[1].trim() : ""; };
+  const endo = g("الحاقیه").split("\n").map(s => s.trim()).filter(Boolean);
+  const loss = g("جزییات خسارت").split("\n").map(s => s.trim()).filter(Boolean);
+  const groups = new Map();
+  loss.forEach(l => { const key = fld(l, "نوع خسارت") + "||" + fld(l, "تاریخ خسارت"); if(!groups.has(key)) groups.set(key, 0); groups.set(key, groups.get(key) + 1); });
+  let tags = "";
+  if(endo.length){
+    tags += `<span class="tg cnt">${endo.length} الحاقیه</span>`;
+    endo.forEach(l => { const m = l.match(/نوع:\s*([^|]+)/); tags += `<span class="tg">${esc(m ? m[1].trim() : "الحاقیه")}</span>`; });
+  }
+  if(groups.size){
+    tags += `<span class="tg cnt r">${groups.size} خسارت</span>`;
+    groups.forEach((n, key) => { const [t, dt] = key.split("||"); tags += `<span class="tg r">${esc(["خسارت " + t, dt].filter(Boolean).join(" · "))}${n > 1 ? " · " + n + " پرداختی" : ""}</span>`; });
+  }
+  if(!tags) tags = `<span class="tg">بدون الحاقیه و خسارت</span>`;
+  return `<div class="card">
+    <div class="ch">${logo}
+      <div><div class="cn">${esc(name || "—")}</div><div class="ct">${esc(g("نوع بیمه"))}</div></div>
+      ${life ? `<span class="st ${life.cls}">${esc(life.txt)}</span>` : ""}
+      <div class="num"><small>شماره بیمه‌نامه</small><b>${esc(g("شماره بیمه نامه") || "—")}</b></div>
+    </div>
+    <div class="grid">
+      ${cell("بیمه‌گذار", g("نام بیمه گذار"))}
+      ${cell("کد ملی", g("کد ملی بیمه گذار"), true)}
+      ${cell("خودرو", [g("نام خودرو"), g("سال ساخت") && "مدل " + g("سال ساخت")].filter(Boolean).join(" · "))}
+      ${cell("پلاک", g("شماره پلاک خودرو"))}
+      ${cell("شماره موتور", g("شماره موتور"), true)}
+      ${cell("شماره شاسی", g("شماره شاسی"), true)}
+      ${cell("شماره VIN", g("شماره VIN"), true)}
+      ${cell("کد یکتا", g("کد یکتا"), true)}
+      ${cell("تاریخ شروع", g("تاریخ شروع"), true)}
+      ${cell("تاریخ پایان", g("تاریخ پایان"), true)}
+      ${cell("وضعیت خسارت", g("خسارت") || "ندارد")}
+      ${cell("ردیف", String(i + 1))}
+    </div>
+    <div class="disc">
+      <div class="dbox"><div class="k">تخفیف ثالث</div><div class="v">${esc(fmtPct(g("درصد تخفیف ثالث")) || "—")}</div></div>
+      <div class="dbox"><div class="k">تخفیف حوادث راننده</div><div class="v">${esc(fmtPct(g("درصد تخفیف حوادث راننده")) || "—")}</div></div>
+    </div>
+    <div class="tags">${tags}</div>
+  </div>`;
+}
+async function downloadPdf(){
+  const p = pLast;
+  if(!p || !p.rows || !p.rows.length){ flashMsg("اول یک استعلام بگیر"); return; }
+  flashMsg("در حال ساخت PDF…");
+  const sv = String(p.search_value || "").replace(/[\\\/:*?"<>|\s]+/g, "_");
+  const title = "استعلام_" + sv + "_" + ymd(new Date());
+  const now = new Date();
+  const when = now.toLocaleDateString("fa-IR") + " - " + now.toLocaleTimeString("fa-IR", {hour: "2-digit", minute: "2-digit"});
+  const html = `<!doctype html><html lang="fa" dir="rtl"><head><meta charset="utf-8"><title>${esc(title)}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;600;800;900&display=swap" rel="stylesheet">
+    <style>${PDF_CSS}</style></head><body><div class="pg">
+    <img class="banner" src="${esc(absUrl("banner.png"))}" alt="" onerror="this.style.display='none'">
+    <h1 class="title">گزارش استعلام بیمه‌نامه</h1>
+    <div class="meta">
+      <span class="chip">مقدار جستجو: <bdi>${esc(p.search_value || "")}</bdi></span>
+      <span class="chip">تاریخ گزارش: ${esc(when)}</span>
+      <span class="chip">تعداد بیمه‌نامه: ${p.rows.length}</span>
+    </div>
+    ${p.rows.map(reportCard).join("")}
+    <div class="foot"><i></i><b>AZKI SWORD</b></div>
+    </div></body></html>`;
+  const fr = document.createElement("iframe");
+  fr.style.cssText = "position:fixed;right:0;bottom:0;width:0;height:0;border:0;visibility:hidden";
+  document.body.appendChild(fr);
+  const doc = fr.contentDocument;
+  doc.open(); doc.write(html); doc.close();
+  // صبر برای فونت و عکس‌ها (حداکثر ۴ ثانیه)
+  const imgs = [...doc.images].map(im => im.complete ? 0 : new Promise(r => { im.onload = im.onerror = r; }));
+  await Promise.race([
+    Promise.all([doc.fonts ? doc.fonts.ready : 0, ...imgs]),
+    new Promise(r => setTimeout(r, 4000))
+  ]);
+  const w = fr.contentWindow;
+  w.focus();
+  w.onafterprint = () => setTimeout(() => fr.remove(), 500);
+  w.print();
+  setTimeout(() => { if(fr.isConnected) fr.remove(); }, 120000);
+}
 
 /* ---------- چینش دکمه‌های شناور روی کمان، با فاصله‌ی مساوی ---------- */
 const FAB_RINGS_ADMIN = [
