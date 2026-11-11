@@ -2115,9 +2115,7 @@ const PDF_CSS = `
 @page{size:A4 landscape;margin:0}
 *{box-sizing:border-box;-webkit-print-color-adjust:exact;print-color-adjust:exact}
 html,body{margin:0;background:#061329;width:297mm;height:209mm;overflow:hidden}
-body{font-family:Vazirmatn,Tahoma,"Segoe UI",sans-serif;color:#edf6ff;font-size:11px;line-height:1.5;
-  background:radial-gradient(ellipse at 10% 0%,rgba(0,130,255,.22),transparent 40%),
-             radial-gradient(ellipse at 95% 15%,rgba(0,205,255,.12),transparent 35%),#061329}
+body{font-family:Vazirmatn,Tahoma,"Segoe UI",sans-serif;color:#edf6ff;font-size:11px;line-height:1.5;background:#061329}
 .pg{width:297mm;height:209mm;padding:6mm 8mm;display:flex;flex-direction:column;gap:3mm;overflow:hidden}
 .banner{display:block;height:24mm;width:auto;max-width:100%;margin:0 auto;border-radius:10px;flex:none}
 .meta{display:flex;gap:6px;justify-content:center;flex:none}
@@ -2138,9 +2136,10 @@ tr:last-child td{border-bottom:0}
 .sub{display:block;font-size:8.5px;color:#a9c3e6;font-weight:600}
 .k{color:#7fa6d6;font-size:8.5px;font-weight:700}
 .co{display:flex;flex-direction:column;align-items:center;gap:1px}
-.lgo{width:30px;height:26px;border-radius:7px;background:#fff;display:grid;place-items:center;padding:2px}
+.lgo{width:30px;height:26px;display:grid;place-items:center;padding:2px}
+
 .lgo img{max-width:100%;max-height:100%;object-fit:contain}
-.lgo span{color:#0757b8;font-weight:900;font-size:13px}
+.lgo span{color:#65caff;font-weight:900;font-size:13px}
 .st{display:inline-block;margin-top:2px;padding:0 8px;border-radius:999px;font-weight:800;font-size:8.5px;border:1px solid}
 .st.ok{color:#49e6b0;background:rgba(16,185,129,.16);border-color:rgba(52,211,153,.5)}
 .st.warn{color:#ffd071;background:rgba(245,158,11,.16);border-color:rgba(245,158,11,.5)}
@@ -2154,13 +2153,18 @@ tr:last-child td{border-bottom:0}
 .foot i{display:block;height:2px;width:50%;margin:0 auto 3px;background:linear-gradient(90deg,transparent,#087bff,#00c8ff,#087bff,transparent)}
 .foot b{font-size:11px;letter-spacing:1.5px;color:#7fd8ff}
 `;
+function cleanedLogo(name){
+  const im = [...document.querySelectorAll(".lg img")].find(i => i.alt === name && i.src.startsWith("data:"));
+  return im ? {src: im.src, lo: im.parentElement.classList.contains("lo")} : null;
+}
 function reportCard(d, i){
   const g = k => (d[k] == null ? "" : d[k]).toString().trim();
   const life = g("تاریخ پایان") ? lifeInfo(g("تاریخ شروع"), g("تاریخ پایان")) : null;
   const name = g("نام شرکت");
-  const lu = name ? logoUrl(name) : "";
+  const cl = name ? cleanedLogo(name) : null;
+  const lu = cl ? cl.src : (name ? logoUrl(name) : "");
   const letter = (name.replace(/^بیمه\s*/, "").trim().charAt(0)) || "؟";
-  const logo = `<div class="lgo">${lu ? `<img src="${esc(lu)}" alt="" onerror="this.replaceWith(Object.assign(document.createElement('span'),{textContent:'${esc(letter)}'}))">` : `<span>${esc(letter)}</span>`}</div>`;
+  const logo = `<div class="lgo${cl && cl.lo ? " lo" : ""}">${lu ? `<img src="${esc(lu)}" alt="" onerror="this.replaceWith(Object.assign(document.createElement('span'),{textContent:'${esc(letter)}'}))">` : `<span>${esc(letter)}</span>`}</div>`;
   const fld = (line, k) => { const m = line.match(new RegExp(k + ":\\s*([^|]+)")); return m ? m[1].trim() : ""; };
   const endo = g("الحاقیه").split("\n").map(s => s.trim()).filter(Boolean);
   const loss = g("جزییات خسارت").split("\n").map(s => s.trim()).filter(Boolean);
