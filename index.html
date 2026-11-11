@@ -2003,35 +2003,72 @@ const XL_COLS = ["کد یکتا", "نام شرکت", "نوع بیمه", "شما�
   "نام خودرو", "سال ساخت", "شماره پلاک خودرو", "شماره موتور", "شماره شاسی", "شماره VIN",
   "تاریخ شروع", "تاریخ پایان", "درصد تخفیف ثالث", "درصد تخفیف حوادث راننده",
   "خسارت", "الحاقیه", "جزییات خسارت"];
-function loadXlsx(){
+function loadScript(src){
   return new Promise((res, rej) => {
-    if(window.XLSX) return res();
     const s = document.createElement("script");
-    s.src = "lib/xlsx.full.min.js";
-    s.onload = res; s.onerror = () => rej(new Error("load"));
+    s.src = src; s.onload = res; s.onerror = () => rej(new Error("load " + src));
     document.head.appendChild(s);
   });
+}
+async function loadXlsx(){
+  if(window.XLSX) return;
+  const srcs = [
+    "lib/xlsx.full.min.js",
+    "https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js",
+    "https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"
+  ];
+  for(const s of srcs){
+    try{ await loadScript(s); if(window.XLSX) return; }catch(e){}
+  }
+  throw new Error("xlsx");
+}
+// پیش‌بارگذاری بی‌صدا تا موقع کلیک آماده باشد
+setTimeout(() => { loadXlsx().catch(() => {}); }, 1500);
+
+function downloadBlob(blob, name){
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = name;
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1500);
+}
+function downloadCsv(data, fileBase){
+  const esc = v => '"' + String(v).replace(/"/g, '""') + '"';
+  const lines = [XL_COLS.map(esc).join(",")]
+    .concat(data.map(r => XL_COLS.map(c => esc(r[c])).join(",")));
+  // BOM برای اینکه اکسل فارسی را درست بخواند
+  downloadBlob(new Blob(["\ufeff" + lines.join("\r\n")], {type: "text/csv;charset=utf-8"}), fileBase + ".csv");
 }
 async function downloadExcel(){
   const p = pLast;
   if(!p || !p.rows || !p.rows.length){ flashMsg("اول یک استعلام بگیر تا نتیجه‌ای برای دانلود باشد"); return; }
-  try{ await loadXlsx(); }catch(e){ flashMsg("کتابخانه‌ی اکسل لود نشد؛ اینترنت را چک کن"); return; }
   const data = p.rows.map(r => {
     const o = {};
     XL_COLS.forEach(c => { o[c] = String(r[c] === undefined || r[c] === null ? "" : r[c]).replace(/\n/g, " ؛ "); });
     return o;
   });
-  const ws = XLSX.utils.json_to_sheet(data, {header: XL_COLS});
-  ws["!cols"] = XL_COLS.map(c => ({wch: Math.min(40, Math.max(c.length, ...data.map(d => d[c].length)) + 2)}));
-  const wb = XLSX.utils.book_new();
-  wb.Workbook = {Views: [{RTL: true}]};
-  XLSX.utils.book_append_sheet(wb, ws, "استعلام");
   const sv = String(p.search_value || "").replace(/[\\\/:*?"<>|\s]+/g, "_");
-  XLSX.writeFile(wb, "استعلام_" + sv + "_" + ymd(new Date()) + ".xlsx");
+  const base = "استعلام_" + sv + "_" + ymd(new Date());
   toggleFab(false);
-  flashMsg("فایل اکسل ذخیره شد");
+  try{
+    await loadXlsx();
+    const ws = XLSX.utils.json_to_sheet(data, {header: XL_COLS});
+    ws["!cols"] = XL_COLS.map(c => ({wch: Math.min(40, Math.max(c.length, ...data.map(d => d[c].length)) + 2)}));
+    const wb = XLSX.utils.book_new();
+    wb.Workbook = {Views: [{RTL: true}]};
+    XLSX.utils.book_append_sheet(wb, ws, "استعلام");
+    const out = XLSX.write(wb, {bookType: "xlsx", type: "array"});
+    downloadBlob(new Blob([out], {type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"}), base + ".xlsx");
+    flashMsg("فایل اکسل ذخیره شد");
+  }catch(e){
+    console.warn("xlsx failed, fallback to csv:", e);
+    downloadCsv(data, base);
+    flashMsg("فایل ذخیره شد (CSV؛ با اکسل باز می‌شود)");
+  }
 }
 $("dlBtn").onclick = downloadExcel;
+
 /* ---------- چینش دکمه‌های شناور روی کمان، با فاصله‌ی مساوی ---------- */
 const FAB_RINGS_ADMIN = [
   {r: 92,  ids: ["themeBtn", "logoutBtn", "adminBtn"]},
